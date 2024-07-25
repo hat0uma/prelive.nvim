@@ -1,4 +1,5 @@
 local log = require("presrv.core.log")
+local server = require("presrv.server")
 local M = {}
 
 local function setup_logger()
@@ -18,9 +19,38 @@ local function setup_logger()
   log.set_default(logger)
 end
 
+--- Open browser with the specified options.
+local function open_browser(url)
+  vim.system({ "explorer", url }, { text = true }, function(obj)
+    if obj.code ~= 0 then
+      log.error("Failed to open browser status=%d stderr=%s", obj.code, obj.stderr)
+    end
+  end)
+end
+
 --- setup
 function M.setup()
   setup_logger()
+
+  vim.api.nvim_create_user_command("PresrvStartReload", function(opts)
+    local dir = opts.fargs[1]
+    M.start_reload(dir)
+  end, { nargs = 1 })
+end
+
+function M.start_reload(dir)
+  dir = vim.fn.fnamemodify(dir, ":p")
+  local url = server.serve({
+    dir = dir,
+    host = "127.0.0.1",
+    port = 2255,
+  })
+
+  vim._watch.watchdirs(dir, {}, function(path, change_type)
+    server.notify_update(dir)
+  end)
+
+  open_browser(url)
 end
 
 return M

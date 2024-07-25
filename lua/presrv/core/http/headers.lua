@@ -2,9 +2,12 @@
 ---@param header string The header to convert.
 ---@return string converted The converted header.
 local function convert_header_case(header)
-  -- convert key to lowercase.
-  -- This is because HTTP headers are case-insensitive.
-  return header:lower()
+  -- convert key to HTTP header case
+  -- These are all converted to `Content-Type`
+  --    Content-type
+  --    content-type
+  --    content-Type
+  return (header:gsub("^%l", string.upper):gsub("-%l", string.upper))
 end
 
 --- @class presrv.http.Headers
