@@ -25,14 +25,14 @@ local INJECT_JS = [[
 </script>
 ]]
 
-local server = nil ---@type presrv.HTTPServer?
+local server = nil ---@type presrv.http.Server?
 local update_detected = false
 
 ---@async
 ---Handle `/update` endpoint.
 ---this endpoint is long-polling.
----@param req presrv.HTTPRequest
----@param res presrv.HTTPResponse
+---@param req presrv.http.Request
+---@param res presrv.http.Response
 local function handle_update(req, res)
   local CHECK_INTERVAL = 1000
   local TIMEOUT = 30000
@@ -63,7 +63,7 @@ local function handle_update(req, res)
 end
 
 --- prewrote hook function
----@param res presrv.HTTPResponse
+---@param res presrv.http.Response
 ---@param body string
 ---@return string body
 local function prewrite_static(res, body)

@@ -1,8 +1,8 @@
 local HTTPHeaders = require("presrv.core.http.headers")
 local status = require("presrv.core.http.status")
 
---- @class presrv.HTTPResponse
---- @field headers presrv.HTTPHeaders
+--- @class presrv.http.Response
+--- @field headers presrv.http.Headers
 --- @field _status integer
 --- @field _connection uv_tcp_t
 --- @field _header_written boolean
@@ -10,7 +10,7 @@ local HTTPResponse = {}
 
 --- Create a new HTTPResponse object.
 ---@param connection uv_tcp_t The connection object to write to.
----@return presrv.HTTPResponse object The new HTTPResponse object.
+---@return presrv.http.Response object The new http.Response object.
 function HTTPResponse:new(connection)
   local obj = {}
   obj._header_written = false

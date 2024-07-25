@@ -7,13 +7,13 @@ local function convert_header_case(header)
   return header:lower()
 end
 
---- @class presrv.HTTPHeaders
+--- @class presrv.http.Headers
 --- @field _headers table<string,string>
 local HTTPHeaders = {}
 
 --- Create a new HTTPHeaders object.
 ---@param headers table<string,string> The headers.
----@return presrv.HTTPHeaders
+---@return presrv.http.Headers
 function HTTPHeaders:new(headers)
   vim.validate({ headers = { headers, "table" } })
 

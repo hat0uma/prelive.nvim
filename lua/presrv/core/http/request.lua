@@ -3,12 +3,12 @@ local status = require("presrv.core.http.status")
 local url = require("presrv.core.http.util.url")
 local VALID_HTTP_METHODS = { "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS" }
 
---- @class presrv.HTTPRequest
+--- @class presrv.http.Request
 --- @field version string
 --- @field method string
 --- @field path string
 --- @field protocol string
---- @field headers presrv.HTTPHeaders
+--- @field headers presrv.http.Headers
 --- @field body string
 --- @field fragment string
 --- @field client_ip string
@@ -16,8 +16,8 @@ local VALID_HTTP_METHODS = { "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS" }
 local HTTPRequest = {}
 
 --- Create a new HTTPRequest object.
----@param param { version:string,method:string,path:string,headers:presrv.HTTPHeaders,body:string,fragment:string,client_ip:string,query:string }
----@return presrv.HTTPRequest
+---@param param { version:string,method:string,path:string,headers:presrv.http.Headers,body:string,fragment:string,client_ip:string,query:string }
+---@return presrv.http.Request
 function HTTPRequest:new(param)
   local obj = {}
   obj.version = param.version
@@ -87,7 +87,7 @@ end
 ---@async
 ---Read headers asynchronously
 ---@param reader presrv.StreamReader
----@return presrv.HTTPHeaders? headers, integer? err_status, string? err_msg
+---@return presrv.http.Headers? headers, integer? err_status, string? err_msg
 local function read_headers_async(reader)
   -- check if the function is called within a coroutine
   local thread = coroutine.running()
@@ -200,7 +200,7 @@ end
 ---@async
 ---Read request body
 ---@param reader presrv.StreamReader
----@param headers presrv.HTTPHeaders
+---@param headers presrv.http.Headers
 ---@return string? data ,integer? err_status, string? err_msg
 local function read_body(reader, headers)
   local content_length = headers:get("Content-Length")
@@ -249,7 +249,7 @@ end
 ---@param reader presrv.StreamReader
 ---@param client_ip string
 ---@param default_host string?
----@return presrv.HTTPRequest? request, integer? err_status, string? err_msg
+---@return presrv.http.Request? request, integer? err_status, string? err_msg
 local function read_request_async(reader, client_ip, default_host)
   vim.validate({ reader = { reader, "table" } })
 

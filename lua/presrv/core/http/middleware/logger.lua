@@ -1,6 +1,6 @@
 local log = require("presrv.core.log")
 --- A middleware that logs the request and response to the console.
----@return presrv.HTTPMiddlewareHandler
+---@return presrv.http.MiddlewareHandler
 return function()
   ---@async
   return function(req, res, donext)

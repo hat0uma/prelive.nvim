@@ -27,7 +27,7 @@ local function render_directory(directory, path)
 end
 
 --- Check file is not modified
----@param req presrv.HTTPRequest
+---@param req presrv.http.Request
 ---@param stat uv.aliases.fs_stat_table
 ---@return boolean
 local function is_file_not_modified(req, stat)
@@ -44,9 +44,9 @@ end
 ---Serve static files.
 ---@param path string The path prefix of static files.
 ---@param rootdir string The root directory of static files. It should be an absolute path.
----@param prewrite (fun(res:presrv.HTTPResponse,body:string):string)?
----@param req presrv.HTTPRequest The request object.
----@param res presrv.HTTPResponse The response object.
+---@param prewrite (fun(res:presrv.http.Response,body:string):string)?
+---@param req presrv.http.Request The request object.
+---@param res presrv.http.Response The response object.
 local function serve_static(path, rootdir, prewrite, req, res)
   -- normalize requested path
   local requested_path = req.path:gsub("^" .. path, "/")
@@ -131,8 +131,8 @@ end
 --- A middleware that serves static files.
 ---@param path string The path prefix of static files.
 ---@param rootdir string The root directory of static files. It should be an absolute path.
----@param prewrite (fun(res:presrv.HTTPResponse,body:string):string)?
----@return presrv.HTTPMiddlewareHandler
+---@param prewrite (fun(res:presrv.http.Response,body:string):string)?
+---@return presrv.http.MiddlewareHandler
 return function(path, rootdir, prewrite)
   vim.validate({
     path = { path, "string" },

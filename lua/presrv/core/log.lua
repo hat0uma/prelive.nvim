@@ -325,11 +325,10 @@ end
 ------------------------------------------------------------------------
 local M = {}
 
-local default_loggger =
-  Logger:new({ {
-    level = vim.log.levels.INFO,
-    handler = NotifyHandler:new({ format = "{message}" }),
-  } })
+local default_loggger = Logger:new({ {
+  level = vim.log.levels.DEBUG,
+  handler = NotifyHandler:new({}),
+} })
 
 --- Create a new Logger
 -- The following example shows how to write logs to a file and notify:
@@ -365,7 +364,7 @@ function M.set_default(logger)
 end
 
 --- Set a log level to default logger.
---- available log levels are listed in `vim.log.levels`.(default is `INFO`)
+--- available log levels are listed in `vim.log.levels`.(default is `DEBUG`)
 --- This function sets the log level for all handlers.
 --- If you want to set the log level for each handler, use `logger:add_handler`.
 ---@param level integer
