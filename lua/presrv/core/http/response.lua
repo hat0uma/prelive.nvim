@@ -1,4 +1,5 @@
 local HTTPHeaders = require("presrv.core.http.headers")
+local log = require("presrv.core.log")
 local status = require("presrv.core.http.status")
 
 --- @class presrv.http.Response
@@ -86,7 +87,7 @@ function HTTPResponse:write_header(status_code)
 
   -- if header is already written, do nothing.
   if self._header_written then
-    vim.notify("Header is already written", vim.log.levels.WARN)
+    log.info("Header is already written with %d. incoming %d is ignored.", self._status, status_code)
     return
   end
 

@@ -1,4 +1,5 @@
 local StremReader = require("presrv.core.http.stream_reader")
+local log = require("presrv.core.log")
 local middleware = require("presrv.core.http.middleware")
 local request = require("presrv.core.http.request")
 local response = require("presrv.core.http.response")
@@ -82,12 +83,15 @@ end
 
 --- Start listening and serving.
 function HTTPServer:start_serve()
-  print("Listening on " .. self._addr .. ":" .. self._port)
+  local ok, err_name, err_msg = self._server:bind(self._addr, self._port)
+  if not ok then
+    log.error("tcp bind failed. :%s:%s", err_name or "", err_msg or "")
+    return
+  end
 
-  self._server:bind(self._addr, self._port)
-  self._server:listen(self._options.tcp_max_backlog, function(err)
+  ok, err_name, err_msg = self._server:listen(self._options.tcp_max_backlog, function(err)
     if err then
-      print("Error: " .. err)
+      log.error("Error occured in tcp listen: %s", err)
       return
     end
 
@@ -100,9 +104,16 @@ function HTTPServer:start_serve()
     local ok
     ok, err = coroutine.resume(thread)
     if not ok then
-      error("failed to start connection coroutine: " .. err)
+      log.error("failed to start connection coroutine: %s", err or "")
     end
   end)
+
+  if not ok then
+    log.error("tcp bind failed. :%s:%s", err_name, err_msg)
+    return
+  end
+
+  log.info("Listening on %s:%d", self._addr, self._port)
 end
 
 ---@async
@@ -120,7 +131,7 @@ function HTTPServer:_handle_connection_async()
   -- TODO: writing big data
   local connection_timer = vim.uv.new_timer()
   local on_connection_timeout = function()
-    print(string.format("%p close connection with timeout", client))
+    log.trace("%p close connection with timeout", client)
     safe_close(client, connection_timer)
   end
   connection_timer:start(self._options.keep_alive_timeout, 0, on_connection_timeout)
@@ -157,7 +168,7 @@ function HTTPServer:_handle_connection_async()
 
     -- keep-alive connection
     if vim.stricmp(res.headers:get("Connection") or "", "keep-alive") ~= 0 then
-      print("close connection")
+      log.trace("close connection %p.", client)
       break
     end
   end
@@ -215,7 +226,13 @@ function HTTPServer:_handle_request(req, res)
       local entry = self._middlewares[i]
       if self:_match(_req, entry) then
         current = i + 1
-        entry.handler(_req, _res, donext)
+        ---@type boolean, string | nil
+        local ok, err = pcall(entry.handler, _req, _res, donext)
+        if not ok then
+          log.error("Error occured in middleware of '%s': %s", entry.pattern, err or "")
+          res:write_header(status.INTERNAL_SERVER_ERROR)
+          return
+        end
         return
       end
     end
@@ -223,7 +240,13 @@ function HTTPServer:_handle_request(req, res)
     -- apply first matching route
     for _, entry in ipairs(self._routes) do
       if self:_match(_req, entry) then
-        entry.handler(_req, _res)
+        ---@type boolean, string | nil
+        local ok, err = pcall(entry.handler, _req, _res)
+        if not ok then
+          log.error("Error occured in handler of '%s': %s", entry.pattern, err or "")
+          res:write_header(status.INTERNAL_SERVER_ERROR)
+          return
+        end
         break
       end
     end

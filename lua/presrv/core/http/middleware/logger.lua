@@ -7,7 +7,7 @@ return function()
     local request_time = os.time()
     donext(req, res)
     local response_time = os.time()
-    log.info(
+    log.debug(
       '%s "%s %s %s" %d %s (%.3fms)',
       req.client_ip,
       req.method,

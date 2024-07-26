@@ -9,8 +9,8 @@ local function setup_logger()
   local logfile = vim.fs.joinpath(log_dir, "presrv.log")
 
   --- add handlers
-  logger:add_notify_handler(vim.log.levels.WARN, { title = "presrv" })
-  logger:add_file_handler(vim.log.levels.INFO, {
+  logger:add_notify_handler(vim.log.levels.INFO, { title = "presrv" })
+  logger:add_file_handler(vim.log.levels.DEBUG, {
     file_path = logfile,
     max_backups = 3,
     max_file_size = 1024 * 1024,
@@ -32,7 +32,7 @@ end
 function M.setup()
   setup_logger()
 
-  vim.api.nvim_create_user_command("PresrvStartReload", function(opts)
+  vim.api.nvim_create_user_command("PreSrvStartLive", function(opts)
     local dir = opts.fargs[1]
     M.start_reload(dir)
   end, { nargs = 1 })
