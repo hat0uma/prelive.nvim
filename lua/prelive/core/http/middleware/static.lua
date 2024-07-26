@@ -1,6 +1,6 @@
-local date = require("presrv.core.http.util.date")
-local mime = require("presrv.core.http.util.mime")
-local status = require("presrv.core.http.status")
+local date = require("prelive.core.http.util.date")
+local mime = require("prelive.core.http.util.mime")
+local status = require("prelive.core.http.status")
 
 --- Render directory listing.
 --- This will render a directory listing in HTML format.
@@ -27,7 +27,7 @@ local function render_directory(directory, path)
 end
 
 --- Check file is not modified
----@param req presrv.http.Request
+---@param req prelive.http.Request
 ---@param stat uv.aliases.fs_stat_table
 ---@return boolean
 local function is_file_not_modified(req, stat)
@@ -44,9 +44,9 @@ end
 ---Serve static files.
 ---@param path string The path prefix of static files.
 ---@param rootdir string The root directory of static files. It should be an absolute path.
----@param prewrite (fun(res:presrv.http.Response,body:string):string)?
----@param req presrv.http.Request The request object.
----@param res presrv.http.Response The response object.
+---@param prewrite (fun(res:prelive.http.Response,body:string):string)?
+---@param req prelive.http.Request The request object.
+---@param res prelive.http.Response The response object.
 local function serve_static(path, rootdir, prewrite, req, res)
   -- normalize requested path
   local requested_path = req.path:gsub("^" .. path, "/")
@@ -131,8 +131,8 @@ end
 --- A middleware that serves static files.
 ---@param path string The path prefix of static files.
 ---@param rootdir string The root directory of static files. It should be an absolute path.
----@param prewrite (fun(res:presrv.http.Response,body:string):string)?
----@return presrv.http.MiddlewareHandler
+---@param prewrite (fun(res:prelive.http.Response,body:string):string)?
+---@return prelive.http.MiddlewareHandler
 return function(path, rootdir, prewrite)
   vim.validate({
     path = { path, "string" },

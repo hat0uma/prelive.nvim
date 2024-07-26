@@ -1,9 +1,9 @@
-local HTTPHeaders = require("presrv.core.http.headers")
-local log = require("presrv.core.log")
-local status = require("presrv.core.http.status")
+local HTTPHeaders = require("prelive.core.http.headers")
+local log = require("prelive.core.log")
+local status = require("prelive.core.http.status")
 
---- @class presrv.http.Response
---- @field headers presrv.http.Headers
+--- @class prelive.http.Response
+--- @field headers prelive.http.Headers
 --- @field _status integer
 --- @field _connection uv_tcp_t
 --- @field _header_written boolean
@@ -11,7 +11,7 @@ local HTTPResponse = {}
 
 --- Create a new HTTPResponse object.
 ---@param connection uv_tcp_t The connection object to write to.
----@return presrv.http.Response object The new http.Response object.
+---@return prelive.http.Response object The new http.Response object.
 function HTTPResponse:new(connection)
   local obj = {}
   obj._header_written = false

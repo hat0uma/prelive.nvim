@@ -1,4 +1,4 @@
----@class presrv.StreamReader
+---@class prelive.StreamReader
 ---@field _stream uv_stream_t
 ---@field _buffer string
 ---@field on_receive fun()?
@@ -6,7 +6,7 @@ local StreamReader = {}
 
 --- Create a new StreamReader object.
 ---@param stream uv_stream_t The stream to read from.
----@return presrv.StreamReader
+---@return prelive.StreamReader
 function StreamReader:new(stream)
   local obj = {}
   obj._stream = stream

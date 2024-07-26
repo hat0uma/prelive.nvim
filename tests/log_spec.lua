@@ -1,4 +1,4 @@
-local log = require("presrv.core.log")
+local log = require("prelive.core.log")
 
 describe("log.Logger", function()
   local logger = log.new_logger(log.levels.INFO)
@@ -43,7 +43,7 @@ end)
 
 describe("log.handlers.NotifyHandler", function()
   local handler = log.handlers.NotifyHandler:new({
-    title = "presrv",
+    title = "prelive",
     format = "{message}",
   })
 

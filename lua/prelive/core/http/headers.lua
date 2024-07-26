@@ -10,13 +10,13 @@ local function convert_header_case(header)
   return (header:gsub("^%l", string.upper):gsub("-%l", string.upper))
 end
 
---- @class presrv.http.Headers
+--- @class prelive.http.Headers
 --- @field _headers table<string,string>
 local HTTPHeaders = {}
 
 --- Create a new HTTPHeaders object.
 ---@param headers table<string,string> The headers.
----@return presrv.http.Headers
+---@return prelive.http.Headers
 function HTTPHeaders:new(headers)
   vim.validate({ headers = { headers, "table" } })
 

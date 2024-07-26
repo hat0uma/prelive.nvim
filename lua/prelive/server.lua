@@ -1,9 +1,9 @@
-local http = require("presrv.core.http")
-local log = require("presrv.core.log")
+local http = require("prelive.core.http")
+local log = require("prelive.core.log")
 
 local M = {
   --- The server instance.
-  --- @type presrv.http.Server?
+  --- @type prelive.http.Server?
   _instance = nil,
   --- The directories being served.
   --- @type table<integer, { dir: string, update_detected: boolean }>
@@ -36,7 +36,7 @@ local INJECT_JS_TEMPLATE = [[
 </script>
 ]]
 
----@class presrv.ServeOptions
+---@class prelive.ServeOptions
 ---@field port integer The port to serve.
 ---@field host string The address to bind.
 ---@field dir string The directory to serve.
@@ -56,8 +56,8 @@ end
 ---@async
 --- Handle `/update` endpoint.
 --- this endpoint is long-polling.
----@param req presrv.http.Request
----@param res presrv.http.Response
+---@param req prelive.http.Request
+---@param res prelive.http.Response
 local function handle_update(req, res)
   local CHECK_INTERVAL = 1000
   local TIMEOUT = 30000
@@ -104,12 +104,12 @@ end
 
 --- create prewrite hook function
 ---@param id integer The id of the directory.
----@return fun(res: presrv.http.Response, body: string): string
+---@return fun(res: prelive.http.Response, body: string): string
 local function create_prewrite_static(id)
   local inject_js = INJECT_JS_TEMPLATE:gsub("{directory_id}", id)
 
   --- prewrite hook function
-  ---@param res presrv.http.Response
+  ---@param res prelive.http.Response
   ---@param body string
   ---@return string body
   return function(res, body)
@@ -138,7 +138,7 @@ function M.get_url(id)
 end
 
 --- Serve files in the given directory.
----@param opts presrv.ServeOptions
+---@param opts prelive.ServeOptions
 ---@return string url
 function M.serve(opts)
   -- Start the server if not already started.

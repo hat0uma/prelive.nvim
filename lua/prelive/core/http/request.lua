@@ -1,14 +1,14 @@
-local HTTPHeaders = require("presrv.core.http.headers")
-local status = require("presrv.core.http.status")
-local url = require("presrv.core.http.util.url")
+local HTTPHeaders = require("prelive.core.http.headers")
+local status = require("prelive.core.http.status")
+local url = require("prelive.core.http.util.url")
 local VALID_HTTP_METHODS = { "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS" }
 
---- @class presrv.http.Request
+--- @class prelive.http.Request
 --- @field version string
 --- @field method string
 --- @field path string
 --- @field protocol string
---- @field headers presrv.http.Headers
+--- @field headers prelive.http.Headers
 --- @field body string
 --- @field fragment string
 --- @field client_ip string
@@ -16,8 +16,8 @@ local VALID_HTTP_METHODS = { "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS" }
 local HTTPRequest = {}
 
 --- Create a new HTTPRequest object.
----@param param { version:string,method:string,path:string,headers:presrv.http.Headers,body:string,fragment:string,client_ip:string,query:string }
----@return presrv.http.Request
+---@param param { version:string,method:string,path:string,headers:prelive.http.Headers,body:string,fragment:string,client_ip:string,query:string }
+---@return prelive.http.Request
 function HTTPRequest:new(param)
   local obj = {}
   obj.version = param.version
@@ -43,7 +43,7 @@ end
 
 ---@async
 ---Parse HTTP request line.
----@param reader presrv.StreamReader
+---@param reader prelive.StreamReader
 ---@return {method:string,path:string,version:string, query:string }? request, integer? err_status, string? err_msg
 local function read_request_line_async(reader)
   local line, err_msg = reader:readline_skip_empty_async()
@@ -86,8 +86,8 @@ end
 
 ---@async
 ---Read headers asynchronously
----@param reader presrv.StreamReader
----@return presrv.http.Headers? headers, integer? err_status, string? err_msg
+---@param reader prelive.StreamReader
+---@return prelive.http.Headers? headers, integer? err_status, string? err_msg
 local function read_headers_async(reader)
   -- check if the function is called within a coroutine
   local thread = coroutine.running()
@@ -122,7 +122,7 @@ end
 
 ---@async
 ---Read chunked body
----@param reader presrv.StreamReader
+---@param reader prelive.StreamReader
 ---@return string? data ,integer? err_status, string? err_msg
 local function read_chunked_body(reader)
   -- RFC 9112 4.1. Chunked Transfer Coding
@@ -199,8 +199,8 @@ end
 
 ---@async
 ---Read request body
----@param reader presrv.StreamReader
----@param headers presrv.http.Headers
+---@param reader prelive.StreamReader
+---@param headers prelive.http.Headers
 ---@return string? data ,integer? err_status, string? err_msg
 local function read_body(reader, headers)
   local content_length = headers:get("Content-Length")
@@ -246,10 +246,10 @@ end
 
 ---@async
 ---Read request asynchronously
----@param reader presrv.StreamReader
+---@param reader prelive.StreamReader
 ---@param client_ip string
 ---@param default_host string?
----@return presrv.http.Request? request, integer? err_status, string? err_msg
+---@return prelive.http.Request? request, integer? err_status, string? err_msg
 local function read_request_async(reader, client_ip, default_host)
   vim.validate({ reader = { reader, "table" } })
 

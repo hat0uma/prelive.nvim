@@ -1,15 +1,15 @@
-local log = require("presrv.core.log")
-local server = require("presrv.server")
+local log = require("prelive.core.log")
+local server = require("prelive.server")
 local M = {}
 
 local function setup_logger()
   -- create a logger
   local logger = log.new_logger()
   local log_dir = vim.fn.stdpath("data") ---@cast log_dir string
-  local logfile = vim.fs.joinpath(log_dir, "presrv.log")
+  local logfile = vim.fs.joinpath(log_dir, "prelive.log")
 
   --- add handlers
-  logger:add_notify_handler(vim.log.levels.INFO, { title = "presrv" })
+  logger:add_notify_handler(vim.log.levels.INFO, { title = "prelive" })
   logger:add_file_handler(vim.log.levels.DEBUG, {
     file_path = logfile,
     max_backups = 3,
@@ -31,8 +31,7 @@ end
 --- setup
 function M.setup()
   setup_logger()
-
-  vim.api.nvim_create_user_command("PreSrvStartLive", function(opts)
+  vim.api.nvim_create_user_command("PreliveStart", function(opts)
     local dir = opts.fargs[1]
     M.start_reload(dir)
   end, { nargs = 1 })

@@ -1,14 +1,14 @@
-local StremReader = require("presrv.core.http.stream_reader")
-local log = require("presrv.core.log")
-local middleware = require("presrv.core.http.middleware")
-local request = require("presrv.core.http.request")
-local response = require("presrv.core.http.response")
-local status = require("presrv.core.http.status")
+local StremReader = require("prelive.core.http.stream_reader")
+local log = require("prelive.core.log")
+local middleware = require("prelive.core.http.middleware")
+local request = require("prelive.core.http.request")
+local response = require("prelive.core.http.response")
+local status = require("prelive.core.http.status")
 
---- @alias presrv.http.RequestHandler async fun(req:presrv.http.Request,res:presrv.http.Response)
---- @alias presrv.http.MiddlewareHandler async fun(req:presrv.http.Request,res:presrv.http.Response,donext:presrv.http.RequestHandler)
+--- @alias prelive.http.RequestHandler async fun(req:prelive.http.Request,res:prelive.http.Response)
+--- @alias prelive.http.MiddlewareHandler async fun(req:prelive.http.Request,res:prelive.http.Response,donext:prelive.http.RequestHandler)
 
----@class presrv.http.ServerOptions
+---@class prelive.http.ServerOptions
 local default_options = {
   --- http keep-alive timeout in milliseconds.
   keep_alive_timeout = 60 * 1000,
@@ -28,19 +28,19 @@ local function safe_close(...)
   end
 end
 
----@class presrv.http.Server
+---@class prelive.http.Server
 ---@field _addr string
 ---@field _port integer
----@field _routes presrv.http.Server.Route[]
----@field _middlewares presrv.http.Server.Middleware[]
+---@field _routes prelive.http.Server.Route[]
+---@field _middlewares prelive.http.Server.Middleware[]
 ---@field _server uv_tcp_t
 ---@field _default_host string
----@field _options presrv.http.ServerOptions
+---@field _options prelive.http.ServerOptions
 ---@field _connections uv_tcp_t[]
 local HTTPServer = {}
 
----@alias presrv.http.Server.Middleware { pattern: string, method?: string, handler: presrv.http.MiddlewareHandler}
----@alias presrv.http.Server.Route { pattern: string, method?: string, handler: presrv.http.RequestHandler}
+---@alias prelive.http.Server.Middleware { pattern: string, method?: string, handler: prelive.http.MiddlewareHandler}
+---@alias prelive.http.Server.Route { pattern: string, method?: string, handler: prelive.http.RequestHandler}
 
 --- Create a new HTTPServer.
 ---
@@ -57,8 +57,8 @@ local HTTPServer = {}
 ---
 ---@param addr string the address to listen on.
 ---@param port integer the port to listen on.
----@param options? presrv.http.ServerOptions the options.
----@return presrv.http.Server
+---@param options? prelive.http.ServerOptions the options.
+---@return prelive.http.Server
 function HTTPServer:new(addr, port, options)
   vim.validate("addr", addr, "string")
   vim.validate("port", port, "number")
@@ -190,8 +190,8 @@ function HTTPServer:_remove_connection_entry(conn)
 end
 
 --- match request with entry.
----@param req presrv.http.Request the request.
----@param entry presrv.http.Server.Middleware | presrv.http.Server.Route the entry.
+---@param req prelive.http.Request the request.
+---@param entry prelive.http.Server.Middleware | prelive.http.Server.Route the entry.
 ---@return boolean
 function HTTPServer:_match(req, entry)
   -- check method
@@ -211,15 +211,15 @@ end
 
 ---@async
 ---Handle request.
----@param req presrv.http.Request the request.
----@param res presrv.http.Response the response.
+---@param req prelive.http.Request the request.
+---@param res prelive.http.Response the response.
 function HTTPServer:_handle_request(req, res)
   local current = 1
 
   ---@async
   ---Call next middleware or route handler.
-  ---@param _req presrv.http.Request
-  ---@param _res presrv.http.Response
+  ---@param _req prelive.http.Request
+  ---@param _res prelive.http.Response
   local function donext(_req, _res)
     -- apply all matching middlewares
     for i = current, #self._middlewares do
@@ -268,7 +268,7 @@ end
 --- Add API route.
 ---@param path string
 ---@param method string
----@param handler presrv.http.RequestHandler
+---@param handler prelive.http.RequestHandler
 function HTTPServer:_add_route(path, method, handler)
   vim.validate({
     path = { path, path_validate() },
@@ -281,28 +281,28 @@ end
 
 --- Add a route for GET method.
 ---@param path string if path ends with slash, it means subtree match. otherwise, it means exact match.
----@param handler presrv.http.RequestHandler the handler function.
+---@param handler prelive.http.RequestHandler the handler function.
 function HTTPServer:get(path, handler)
   self:_add_route(path, "GET", handler)
 end
 
 --- Add a route for PUT method.
 ---@param path string if path ends with slash, it means subtree match. otherwise, it means exact match.
----@param handler presrv.http.RequestHandler the handler function.
+---@param handler prelive.http.RequestHandler the handler function.
 function HTTPServer:put(path, handler)
   self:_add_route(path, "PUT", handler)
 end
 
 --- Add a route for POST method.
 ---@param path string if path ends with slash, it means subtree match. otherwise, it means exact match.
----@param handler presrv.http.RequestHandler the handler function.
+---@param handler prelive.http.RequestHandler the handler function.
 function HTTPServer:post(path, handler)
   self:_add_route(path, "POST", handler)
 end
 
 --- Add a route for DELETE method.
 ---@param path string if path ends with slash, it means subtree match. otherwise, it means exact match.
----@param handler presrv.http.RequestHandler the handler function.
+---@param handler prelive.http.RequestHandler the handler function.
 function HTTPServer:delete(path, handler)
   self:_add_route(path, "DELETE", handler)
 end
@@ -310,7 +310,7 @@ end
 --- Add a middleware.
 --- The registered middlewares will be applied in the order they are registered.
 ---@param path string if path ends with slash, it means subtree match. otherwise, it means exact match.
----@param handler presrv.http.MiddlewareHandler the middleware handler.
+---@param handler prelive.http.MiddlewareHandler the middleware handler.
 function HTTPServer:use(path, handler)
   vim.validate({
     path = { path, path_validate() },
@@ -322,7 +322,7 @@ end
 --- Add a static file middleware.
 ---@param path string the path prefix of static files.
 ---@param rootdir string the root directory of static files. it should be an absolute path.
----@param prewrite (fun(res:presrv.http.Response,body:string):string)?
+---@param prewrite (fun(res:prelive.http.Response,body:string):string)?
 function HTTPServer:use_static(path, rootdir, prewrite)
   if not vim.endswith(path, "/") then
     path = path .. "/"

@@ -6,22 +6,22 @@
 -- - NotifyHandler: Provides a handler to show logs using `vim.notify`.
 -- - StringFormatter: Provides a formatter to format log records using a format string.
 
---- @class presrv.log.Record
+--- @class prelive.log.Record
 --- @field level number
 --- @field time number
 --- @field message string
 
---- @class presrv.log.Formatter
---- @field format fun(self: presrv.log.Formatter, record: presrv.log.Record): string
+--- @class prelive.log.Formatter
+--- @field format fun(self: prelive.log.Formatter, record: prelive.log.Record): string
 
---- @class presrv.log.Handler
---- @field write fun(self: presrv.log.Handler, record: presrv.log.Record)
+--- @class prelive.log.Handler
+--- @field write fun(self: prelive.log.Handler, record: prelive.log.Record)
 
 ------------------------------------------------------------------------
 -- StringFormatter
 ------------------------------------------------------------------------
 
---- @class presrv.log.StringFormatter : presrv.log.Formatter
+--- @class prelive.log.StringFormatter : prelive.log.Formatter
 --- @field _format string
 --- @field _level_text table<integer, string>
 local StringFormatter = {}
@@ -36,7 +36,7 @@ local StringFormatter = {}
 ---   - "{level} [{time:%Y-%m-%d %H:%M:%S}] {message}"
 ---   - "INFO [{time:%Y-%m-%d %H:%M:%S}] hello, world!"
 ---@param format string
----@return presrv.log.StringFormatter
+---@return prelive.log.StringFormatter
 function StringFormatter:new(format)
   local obj = {}
   obj._format = format
@@ -54,7 +54,7 @@ function StringFormatter:new(format)
 end
 
 --- Format a log record.
----@param record presrv.log.Record
+---@param record prelive.log.Record
 ---@return string
 function StringFormatter:format(record)
   local text = self._format
@@ -70,7 +70,7 @@ end
 -- FileHandler
 ------------------------------------------------------------------------
 
---- @class presrv.log.FileHandler.Options
+--- @class prelive.log.FileHandler.Options
 --- @field file_path string Path to log file.
 --- @field max_file_size number Max file size in bytes.
 --- @field max_backups number Number of log files to rotate.
@@ -81,16 +81,16 @@ local file_handler_default_options = {
   max_backups = 1,
 }
 
---- @class presrv.log.FileHandler : presrv.log.Handler
+--- @class prelive.log.FileHandler : prelive.log.Handler
 --- @field _fd number?
---- @field _options presrv.log.FileHandler.Options
---- @field _formatter presrv.log.Formatter Formatter.
+--- @field _options prelive.log.FileHandler.Options
+--- @field _formatter prelive.log.Formatter Formatter.
 local FileHandler = {}
 
 --- Create a new FileHandler.
----@param options presrv.log.FileHandler.Options
----@param formatter presrv.log.Formatter?
----@return presrv.log.FileHandler
+---@param options prelive.log.FileHandler.Options
+---@param formatter prelive.log.Formatter?
+---@return prelive.log.FileHandler
 function FileHandler:new(options, formatter)
   options = vim.tbl_deep_extend("force", file_handler_default_options, options)
 
@@ -105,7 +105,7 @@ function FileHandler:new(options, formatter)
 end
 
 --- Write a record to log file.
----@param record presrv.log.Record
+---@param record prelive.log.Record
 function FileHandler:write(record)
   self:_ensure_open()
   self:rotate()
@@ -176,21 +176,21 @@ end
 -- NotifyHandler
 ------------------------------------------------------------------------
 
---- @class presrv.log.NotifyHandler.Options
+--- @class prelive.log.NotifyHandler.Options
 --- @field title string?
 local notify_handler_default_options = {
   title = nil,
 }
 
---- @class presrv.log.NotifyHandler : presrv.log.Handler
---- @field _options presrv.log.NotifyHandler.Options Options.
---- @field _formatter presrv.log.Formatter Formatter.
+--- @class prelive.log.NotifyHandler : prelive.log.Handler
+--- @field _options prelive.log.NotifyHandler.Options Options.
+--- @field _formatter prelive.log.Formatter Formatter.
 local NotifyHandler = {}
 
 --- Create a new NotifyHandler.
----@param options presrv.log.NotifyHandler.Options
----@param formatter presrv.log.Formatter?
----@return presrv.log.NotifyHandler
+---@param options prelive.log.NotifyHandler.Options
+---@param formatter prelive.log.Formatter?
+---@return prelive.log.NotifyHandler
 function NotifyHandler:new(options, formatter)
   options = vim.tbl_deep_extend("force", notify_handler_default_options, options)
 
@@ -204,7 +204,7 @@ function NotifyHandler:new(options, formatter)
 end
 
 --- Write a record to notify.
----@param record presrv.log.Record
+---@param record prelive.log.Record
 function NotifyHandler:write(record)
   local log = self._formatter:format(record)
   self._last_notification = vim.notify(log, record.level, {
@@ -217,13 +217,13 @@ end
 -- Logger
 ------------------------------------------------------------------------
 
---- @class presrv.log.Logger
---- @field handlers {level: integer, handler: presrv.log.Handler}[]
+--- @class prelive.log.Logger
+--- @field handlers {level: integer, handler: prelive.log.Handler}[]
 local Logger = {}
 
 --- Create a new Logger.
----@param handlers ({level: integer, handler: presrv.log.Handler}[])?
----@return presrv.log.Logger
+---@param handlers ({level: integer, handler: prelive.log.Handler}[])?
+---@return prelive.log.Logger
 function Logger:new(handlers)
   local obj = {}
   obj.handlers = handlers or {}
@@ -234,7 +234,7 @@ function Logger:new(handlers)
 end
 
 --- Add a handler.
----@param handler presrv.log.Handler
+---@param handler prelive.log.Handler
 ---@param level integer Log level.
 function Logger:add_handler(handler, level)
   table.insert(self.handlers, { level = level, handler = handler })
@@ -242,8 +242,8 @@ end
 
 --- Add a file handler.
 ---@param level integer Log level.
----@param options presrv.log.FileHandler.Options File handler options.
----@param formatter presrv.log.Formatter | string | nil Formatter. if nil, use default formatter. if string, use `StringFormatter`.
+---@param options prelive.log.FileHandler.Options File handler options.
+---@param formatter prelive.log.Formatter | string | nil Formatter. if nil, use default formatter. if string, use `StringFormatter`.
 function Logger:add_file_handler(level, options, formatter)
   if type(formatter) == "string" then
     formatter = StringFormatter:new(formatter)
@@ -253,8 +253,8 @@ end
 
 --- Add a notify handler.
 ---@param level integer Log level.
----@param options presrv.log.NotifyHandler.Options Notify handler options.
----@param formatter presrv.log.Formatter | string | nil Formatter. if nil, use default formatter. if string, use `StringFormatter`.
+---@param options prelive.log.NotifyHandler.Options Notify handler options.
+---@param formatter prelive.log.Formatter | string | nil Formatter. if nil, use default formatter. if string, use `StringFormatter`.
 function Logger:add_notify_handler(level, options, formatter)
   if type(formatter) == "string" then
     formatter = StringFormatter:new(formatter)
@@ -268,7 +268,7 @@ end
 ---@param ... any
 function Logger:write(level, format, ...)
   -- handle log record
-  ---@type presrv.log.Record
+  ---@type prelive.log.Record
   local record
   for _, iter in ipairs(self.handlers) do
     -- check log level and write log
@@ -333,17 +333,17 @@ local default_loggger = Logger:new({ {
 --- Create a new Logger
 -- The following example shows how to write logs to a file and notify:
 -- ```lua
--- local log = require("presrv.log")
+-- local log = require("prelive.log")
 -- -- use default logger
 -- log.info("Hello, World!")
 -- -- create a new logger
 -- local logger = log.new_logger()
 -- logger:add_file_handler(vim.log.levels.INFO, {
---   file_path = vim.fn.stdpath("data") .. "/presrv.log",
+--   file_path = vim.fn.stdpath("data") .. "/prelive.log",
 --   max_file_size = 1024 * 1024,
 --   max_backups = 3,
 -- }, "{level} [{time:%Y-%m-%d %H:%M:%S}] {message}")
--- logger:add_notify_handler(vim.log.levels.WARN, { title = "presrv" }, "{message}")
+-- logger:add_notify_handler(vim.log.levels.WARN, { title = "prelive" }, "{message}")
 -- logger:info("Hello, World!")
 --
 -- --- Set the default logger
@@ -351,14 +351,14 @@ local default_loggger = Logger:new({ {
 -- log.info("Hello, World!")
 -- log.error("Something went wrong!")
 -- ```
----@param handlers ({level: integer?, handler: presrv.log.Handler}[])?
----@return presrv.log.Logger
+---@param handlers ({level: integer?, handler: prelive.log.Handler}[])?
+---@return prelive.log.Logger
 function M.new_logger(handlers)
   return Logger:new(handlers)
 end
 
 --- Set a logger to default
----@param logger presrv.log.Logger
+---@param logger prelive.log.Logger
 function M.set_default(logger)
   default_loggger = logger
 end
