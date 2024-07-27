@@ -41,11 +41,11 @@ function StringFormatter:new(format)
   local obj = {}
   obj._format = format
   obj._level_text = {
-    [vim.log.levels.INFO] = "INFO",
+    [vim.log.levels.INFO] = "INFO ",
     [vim.log.levels.DEBUG] = "DEBUG",
     [vim.log.levels.ERROR] = "ERROR",
     [vim.log.levels.TRACE] = "TRACE",
-    [vim.log.levels.WARN] = "WARN",
+    [vim.log.levels.WARN] = "WARN ",
   }
 
   setmetatable(obj, self)
@@ -214,121 +214,9 @@ function NotifyHandler:write(record)
 end
 
 ------------------------------------------------------------------------
--- Logger
-------------------------------------------------------------------------
-
---- @class prelive.log.Logger
---- @field handlers {level: integer, handler: prelive.log.Handler}[]
-local Logger = {}
-
---- Create a new Logger.
----@param handlers ({level: integer, handler: prelive.log.Handler}[])?
----@return prelive.log.Logger
-function Logger:new(handlers)
-  local obj = {}
-  obj.handlers = handlers or {}
-
-  setmetatable(obj, self)
-  self.__index = self
-  return obj
-end
-
---- Add a handler.
----@param handler prelive.log.Handler
----@param level integer Log level.
-function Logger:add_handler(handler, level)
-  table.insert(self.handlers, { level = level, handler = handler })
-end
-
---- Add a file handler.
----@param level integer Log level.
----@param options prelive.log.FileHandler.Options File handler options.
----@param formatter prelive.log.Formatter | string | nil Formatter. if nil, use default formatter. if string, use `StringFormatter`.
-function Logger:add_file_handler(level, options, formatter)
-  if type(formatter) == "string" then
-    formatter = StringFormatter:new(formatter)
-  end
-  self:add_handler(FileHandler:new(options, formatter), level)
-end
-
---- Add a notify handler.
----@param level integer Log level.
----@param options prelive.log.NotifyHandler.Options Notify handler options.
----@param formatter prelive.log.Formatter | string | nil Formatter. if nil, use default formatter. if string, use `StringFormatter`.
-function Logger:add_notify_handler(level, options, formatter)
-  if type(formatter) == "string" then
-    formatter = StringFormatter:new(formatter)
-  end
-  self:add_handler(NotifyHandler:new(options, formatter), level)
-end
-
---- Write a log record.
----@param level integer Log level.
----@param format string Log format.
----@param ... any
-function Logger:write(level, format, ...)
-  -- handle log record
-  ---@type prelive.log.Record
-  local record
-  for _, iter in ipairs(self.handlers) do
-    -- check log level and write log
-    if level >= iter.level then
-      if not record then
-        record = {
-          level = level,
-          time = os.time(),
-          message = string.format(format, ...),
-        }
-      end
-      iter.handler:write(record)
-    end
-  end
-end
-
---- info log
----@param format string
----@param ... any
-function Logger:info(format, ...)
-  self:write(vim.log.levels.INFO, format, ...)
-end
-
---- error log
----@param format string
----@param ... any
-function Logger:error(format, ...)
-  self:write(vim.log.levels.ERROR, format, ...)
-end
-
---- warn log
----@param format string
----@param ... any
-function Logger:warn(format, ...)
-  self:write(vim.log.levels.WARN, format, ...)
-end
-
---- debug log
----@param format string
----@param ... any
-function Logger:debug(format, ...)
-  self:write(vim.log.levels.DEBUG, format, ...)
-end
-
---- trace log
----@param format string
----@param ... any
-function Logger:trace(format, ...)
-  self:write(vim.log.levels.TRACE, format, ...)
-end
-
-------------------------------------------------------------------------
 -- APIs
 ------------------------------------------------------------------------
 local M = {}
-
-local default_loggger = Logger:new({ {
-  level = vim.log.levels.DEBUG,
-  handler = NotifyHandler:new({}),
-} })
 
 --- Create a new Logger
 -- The following example shows how to write logs to a file and notify:
@@ -338,13 +226,13 @@ local default_loggger = Logger:new({ {
 -- log.info("Hello, World!")
 -- -- create a new logger
 -- local logger = log.new_logger()
--- logger:add_file_handler(vim.log.levels.INFO, {
+-- logger.add_file_handler(vim.log.levels.INFO, {
 --   file_path = vim.fn.stdpath("data") .. "/prelive.log",
 --   max_file_size = 1024 * 1024,
 --   max_backups = 3,
 -- }, "{level} [{time:%Y-%m-%d %H:%M:%S}] {message}")
--- logger:add_notify_handler(vim.log.levels.WARN, { title = "prelive" }, "{message}")
--- logger:info("Hello, World!")
+-- logger.add_notify_handler(vim.log.levels.WARN, { title = "prelive" }, "{message}")
+-- logger.info("Hello, World!")
 --
 -- --- Set the default logger
 -- log.set_default(logger)
@@ -354,8 +242,106 @@ local default_loggger = Logger:new({ {
 ---@param handlers ({level: integer?, handler: prelive.log.Handler}[])?
 ---@return prelive.log.Logger
 function M.new_logger(handlers)
-  return Logger:new(handlers)
+  --- @class prelive.log.Logger
+  local Logger = {}
+
+  -- handlers
+  Logger.handlers = handlers or {}
+
+  --- Add a handler.
+  ---@param handler prelive.log.Handler
+  ---@param level integer Log level.
+  function Logger.add_handler(handler, level)
+    table.insert(Logger.handlers, { level = level, handler = handler })
+  end
+
+  --- Add a file handler.
+  ---@param level integer Log level.
+  ---@param options prelive.log.FileHandler.Options File handler options.
+  ---@param formatter prelive.log.Formatter | string | nil Formatter. if nil, use default formatter. if string, use `StringFormatter`.
+  function Logger.add_file_handler(level, options, formatter)
+    if type(formatter) == "string" then
+      formatter = StringFormatter:new(formatter)
+    end
+    Logger.add_handler(FileHandler:new(options, formatter), level)
+  end
+
+  --- Add a notify handler.
+  ---@param level integer Log level.
+  ---@param options prelive.log.NotifyHandler.Options Notify handler options.
+  ---@param formatter prelive.log.Formatter | string | nil Formatter. if nil, use default formatter. if string, use `StringFormatter`.
+  function Logger.add_notify_handler(level, options, formatter)
+    if type(formatter) == "string" then
+      formatter = StringFormatter:new(formatter)
+    end
+    Logger.add_handler(NotifyHandler:new(options, formatter), level)
+  end
+
+  --- Write a log record.
+  ---@param level integer Log level.
+  ---@param format string Log format.
+  ---@param ... any
+  function Logger.write(level, format, ...)
+    -- handle log record
+    ---@type prelive.log.Record
+    local record
+    for _, iter in ipairs(Logger.handlers) do
+      -- check log level and write log
+      if level >= iter.level then
+        if not record then
+          record = {
+            level = level,
+            time = os.time(),
+            message = string.format(format, ...),
+          }
+        end
+        iter.handler:write(record)
+      end
+    end
+  end
+
+  --- info log
+  ---@param format string
+  ---@param ... any
+  function Logger.info(format, ...)
+    Logger.write(vim.log.levels.INFO, format, ...)
+  end
+
+  --- error log
+  ---@param format string
+  ---@param ... any
+  function Logger.error(format, ...)
+    Logger.write(vim.log.levels.ERROR, format, ...)
+  end
+
+  --- warn log
+  ---@param format string
+  ---@param ... any
+  function Logger.warn(format, ...)
+    Logger.write(vim.log.levels.WARN, format, ...)
+  end
+
+  --- debug log
+  ---@param format string
+  ---@param ... any
+  function Logger.debug(format, ...)
+    Logger.write(vim.log.levels.DEBUG, format, ...)
+  end
+
+  --- trace log
+  ---@param format string
+  ---@param ... any
+  function Logger.trace(format, ...)
+    Logger.write(vim.log.levels.TRACE, format, ...)
+  end
+
+  return Logger
 end
+
+local default_loggger = M.new_logger({ {
+  level = vim.log.levels.DEBUG,
+  handler = NotifyHandler:new({}),
+} })
 
 --- Set a logger to default
 ---@param logger prelive.log.Logger
@@ -374,40 +360,11 @@ function M.set_level(level)
   end
 end
 
---- info log
----@param format string
----@param ... any
-function M.info(format, ...)
-  default_loggger:info(format, ...)
-end
-
---- error log
----@param format string
----@param ... any
-function M.error(format, ...)
-  default_loggger:error(format, ...)
-end
-
---- warn log
----@param format string
----@param ... any
-function M.warn(format, ...)
-  default_loggger:warn(format, ...)
-end
-
---- degug log
----@param format string
----@param ... any
-function M.debug(format, ...)
-  default_loggger:debug(format, ...)
-end
-
---- trace log
----@param format string
----@param ... any
-function M.trace(format, ...)
-  default_loggger:trace(format, ...)
-end
+M.info = default_loggger.info
+M.error = default_loggger.error
+M.warn = default_loggger.warn
+M.debug = default_loggger.debug
+M.trace = default_loggger.trace
 
 M.handlers = {
   FileHandler = FileHandler,

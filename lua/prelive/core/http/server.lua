@@ -39,7 +39,7 @@ end
 ---@field _connections uv_tcp_t[]
 local HTTPServer = {}
 
----@alias prelive.http.Server.Middleware { pattern: string, method?: string, handler: prelive.http.MiddlewareHandler}
+---@alias prelive.http.Server.Middleware { name?:string, pattern: string, method?: string, handler: prelive.http.MiddlewareHandler}
 ---@alias prelive.http.Server.Route { pattern: string, method?: string, handler: prelive.http.RequestHandler}
 
 --- Create a new HTTPServer.
@@ -311,38 +311,57 @@ end
 --- The registered middlewares will be applied in the order they are registered.
 ---@param path string if path ends with slash, it means subtree match. otherwise, it means exact match.
 ---@param handler prelive.http.MiddlewareHandler the middleware handler.
-function HTTPServer:use(path, handler)
+---@param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
+function HTTPServer:use(path, handler, name)
   vim.validate({
     path = { path, path_validate() },
     handler = { handler, "function" },
+    name = { name, "string", true },
   })
-  table.insert(self._middlewares, { pattern = path, handler = handler })
+  table.insert(self._middlewares, { name = name, pattern = path, handler = handler })
+end
+
+--- Remove a middleware.
+---@param name string the name of the middleware. use the name specified in `prelive.http.Server:use`.
+function HTTPServer:remove_middleware(name)
+  for i = #self._middlewares, 1, -1 do
+    if self._middlewares[i].name == name then
+      table.remove(self._middlewares, i)
+      return
+    end
+  end
+  log.warn("middleware '%s' not found", name)
 end
 
 --- Add a static file middleware.
 ---@param path string the path prefix of static files.
 ---@param rootdir string the root directory of static files. it should be an absolute path.
 ---@param prewrite (fun(res:prelive.http.Response,body:string):string)?
-function HTTPServer:use_static(path, rootdir, prewrite)
+---@param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
+function HTTPServer:use_static(path, rootdir, prewrite, name)
   if not vim.endswith(path, "/") then
     path = path .. "/"
   end
-  self:use(path, middleware.static(path, rootdir, prewrite))
+  self:use(path, middleware.static(path, rootdir, prewrite), name)
 end
 
 --- Add a logger middleware.
 ---@param path? string if path is specified, only log the request and response for the path.
-function HTTPServer:use_logger(path)
+---@param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
+function HTTPServer:use_logger(path, name)
   if not path then
     path = "/"
   end
-  self:use(path, middleware.logger())
+  self:use(path, middleware.logger(), name)
 end
 
 --- Close server
 function HTTPServer:close()
   self._server:close()
   for i = #self._connections, 1, -1 do
+    if not self._connections[i]:is_closing() then
+      self._connections[i]:close()
+    end
     table.remove(self._connections, i)
   end
 end

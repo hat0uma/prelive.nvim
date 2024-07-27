@@ -52,13 +52,13 @@ function HTTPResponse:write(body, size, status_code)
     self:write_header(status_code or status.OK)
   else -- if header is already written, check status code
     if status_code ~= nil then
-      vim.notify("Status code is ignored because the header is already written", vim.log.levels.WARN)
+      log.warn("Status code is ignored because the header is already written")
     end
   end
 
   -- write body
   if self._connection:is_closing() then
-    vim.notify("Connection is already closing", vim.log.levels.WARN)
+    log.warn("Connection is already closing")
     return
   end
 
@@ -108,7 +108,7 @@ function HTTPResponse:write_header(status_code)
   table.insert(lines, "\r\n")
 
   if self._connection:is_closing() then
-    vim.notify("Connection is already closing", vim.log.levels.WARN)
+    log.info("Connection is already closing")
     return
   end
 

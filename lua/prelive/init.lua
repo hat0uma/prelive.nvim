@@ -1,55 +1,52 @@
+local api = require("prelive.api")
+local config = require("prelive.config")
 local log = require("prelive.core.log")
-local server = require("prelive.server")
+
 local M = {}
 
-local function setup_logger()
-  -- create a logger
+--- Setup logger
+--- @param opts prelive.Config
+local function setup_logger(opts)
+  -- create a logger and set it as the default logger.
   local logger = log.new_logger()
-  local log_dir = vim.fn.stdpath("data") ---@cast log_dir string
-  local logfile = vim.fs.joinpath(log_dir, "prelive.log")
-
-  --- add handlers
-  logger:add_notify_handler(vim.log.levels.INFO, { title = "prelive" })
-  logger:add_file_handler(vim.log.levels.DEBUG, {
-    file_path = logfile,
-    max_backups = 3,
-    max_file_size = 1024 * 1024,
-  })
-  -- set the default logger
+  logger.add_notify_handler(opts.logger.notify_level, opts.logger.notify)
+  logger.add_file_handler(opts.logger.file_level, opts.logger.file)
   log.set_default(logger)
 end
 
---- Open browser with the specified options.
-local function open_browser(url)
-  vim.system({ "explorer", url }, { text = true }, function(obj)
-    if obj.code ~= 0 then
-      log.error("Failed to open browser status=%d stderr=%s", obj.code, obj.stderr)
+local function setup_commands()
+  vim.api.nvim_create_user_command("PreLiveStart", function()
+    local dir = vim.uv.cwd()
+    local file = vim.api.nvim_buf_get_name(0)
+    if file ~= "" then
+      file = vim.fn.fnamemodify(file, ":~:.")
     end
-  end)
+    api.start(dir, file)
+  end, {})
+
+  vim.api.nvim_create_user_command("PreLiveShow", function()
+    api.show()
+  end, {})
+
+  vim.api.nvim_create_user_command("PreLiveStop", function()
+    api.select_stop()
+  end, {})
+
+  vim.api.nvim_create_user_command("PreLiveStopAll", function()
+    api.stop()
+  end, {})
+
+  vim.api.nvim_create_user_command("PreLiveLog", function()
+    api.open_log()
+  end, {})
 end
 
 --- setup
-function M.setup()
-  setup_logger()
-  vim.api.nvim_create_user_command("PreliveStart", function(opts)
-    local dir = opts.fargs[1]
-    M.start_reload(dir)
-  end, { nargs = 1 })
-end
-
-function M.start_reload(dir)
-  dir = vim.fn.fnamemodify(dir, ":p")
-  local url = server.serve({
-    dir = dir,
-    host = "127.0.0.1",
-    port = 2255,
-  })
-
-  vim._watch.watchdirs(dir, {}, function(path, change_type)
-    server.notify_update(dir)
-  end)
-
-  open_browser(url)
+---@param opts? prelive.Config
+function M.setup(opts)
+  opts = config.setup(opts)
+  setup_logger(opts)
+  setup_commands()
 end
 
 return M
