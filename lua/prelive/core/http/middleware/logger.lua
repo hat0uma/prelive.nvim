@@ -4,18 +4,18 @@ local log = require("prelive.core.log")
 return function()
   ---@async
   return function(req, res, donext)
-    local request_time = os.time()
+    local request_time = vim.uv.now()
     donext(req, res)
-    local response_time = os.time()
+    local response_time = vim.uv.now()
     log.debug(
-      '%s "%s %s %s" %d %s (%.3fms)',
+      '%s "%s %s %s" %d %s (%dms)',
       req.client_ip,
       req.method,
       req.path,
       req.version,
       res:get_status(),
       res.headers:get("Content-Length") or "-",
-      (response_time - request_time) * 1000
+      response_time - request_time
     )
   end
 end

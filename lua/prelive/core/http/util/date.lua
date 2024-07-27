@@ -1,17 +1,24 @@
 local M = {}
 
---- Get timezone
----@return integer
-local function get_timezone()
+local timezone = {
+  cache = nil,
+}
+
+--- Get timezone offset in seconds
+---@return integer timezone offset in seconds
+timezone.get = function()
+  if timezone.cache then
+    return timezone.cache
+  end
+
   local localtime = os.time()
   local gmt_date = os.date("!*t", localtime)
 
   ---@diagnostic disable-next-line: param-type-mismatch
   local gmtime = os.time(gmt_date)
-  return os.difftime(localtime, gmtime)
+  timezone.cache = os.difftime(localtime, gmtime)
+  return timezone.cache
 end
-
-M.timezone = get_timezone()
 
 local MON = {
   Jan = 1,
@@ -42,7 +49,7 @@ function M.from_rfc1123_GMT(date)
 
   month = MON[month]
   local dateparam = { day = day, month = month, year = year, hour = hour, min = min, sec = sec }
-  return os.time(dateparam) + M.timezone
+  return os.time(dateparam) + timezone.get()
 end
 
 --- Convert timestamp to RFC1123 date format(GMT)

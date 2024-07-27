@@ -58,8 +58,9 @@ end
 ---@return string
 function StringFormatter:format(record)
   local text = self._format
+  local message = record.message:gsub("%%", "%%%%")
   text = text:gsub("{level}", self._level_text[record.level] or "UNKNOWN")
-  text = text:gsub("{message}", record.message)
+  text = text:gsub("{message}", message)
   text = text:gsub("{time:(.-)}", function(fmt)
     return os.date(fmt, record.time)
   end)
@@ -216,6 +217,7 @@ end
 ------------------------------------------------------------------------
 -- APIs
 ------------------------------------------------------------------------
+--- @class prelive.log.mod : prelive.log.Logger
 local M = {}
 
 --- Create a new Logger
@@ -285,14 +287,20 @@ function M.new_logger(handlers)
     -- handle log record
     ---@type prelive.log.Record
     local record
+
     for _, iter in ipairs(Logger.handlers) do
       -- check log level and write log
       if level >= iter.level then
         if not record then
+          local ok, message = pcall(string.format, format, ...)
+          if not ok then
+            message = string.format("failed to format log: %s: %s", message, format)
+            level = vim.log.levels.ERROR
+          end
           record = {
             level = level,
             time = os.time(),
-            message = string.format(format, ...),
+            message = message,
           }
         end
         iter.handler:write(record)
@@ -360,12 +368,6 @@ function M.set_level(level)
   end
 end
 
-M.info = default_loggger.info
-M.error = default_loggger.error
-M.warn = default_loggger.warn
-M.debug = default_loggger.debug
-M.trace = default_loggger.trace
-
 M.handlers = {
   FileHandler = FileHandler,
   NotifyHandler = NotifyHandler,
@@ -375,4 +377,8 @@ M.formatters = {
   StringFormatter = StringFormatter,
 }
 
-return M
+return setmetatable(M, {
+  __index = function(_, key)
+    return default_loggger[key]
+  end,
+})
