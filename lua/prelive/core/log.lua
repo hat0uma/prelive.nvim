@@ -1,10 +1,10 @@
--- Logging module.
--- This module provides a simple logging system.
--- The following classes are provided:
--- - Logger: Provides methods to write logs.
--- - FileHandler: Provides a handler to write logs to a file.
--- - NotifyHandler: Provides a handler to show logs using `vim.notify`.
--- - StringFormatter: Provides a formatter to format log records using a format string.
+---  Logging module.
+--- This module provides a simple logging system.
+--- The following classes are provided:
+--- - Logger: Provides methods to write logs.
+--- - FileHandler: Provides a handler to write logs to a file.
+--- - NotifyHandler: Provides a handler to show logs using `vim.notify`.
+--- - StringFormatter: Provides a formatter to format log records using a format string.
 
 --- @class prelive.log.Record
 --- @field level number
@@ -217,6 +217,7 @@ end
 ------------------------------------------------------------------------
 -- APIs
 ------------------------------------------------------------------------
+
 --- @class prelive.log.mod : prelive.log.Logger
 local M = {}
 

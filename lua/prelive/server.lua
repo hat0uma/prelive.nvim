@@ -109,7 +109,7 @@ function PreLiveServer:add_directory(dir, watch)
   -- Watch changes in the directory.
   if watch then
     self._instance:use(path, self:_track_changes(dir, path, directory_id))
-    self._dirs[directory_id].watcher = Watcher:new(dir)
+    self._dirs[directory_id].watcher = Watcher:new()
     self._dirs[directory_id].watcher:watch(function()
       self:notify_update(dir)
     end)

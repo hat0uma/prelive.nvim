@@ -1,20 +1,16 @@
 local DEFAULT_POLLING_INTERVAL = 100
 
----Polls for changes in the specified files.
 ---@class prelive.Watcher
----@field _dir string
 ---@field _timer uv_timer_t
 ---@field _watch_files table<string,{ stat?: uv.aliases.fs_stat_table } >
 local Watcher = {}
 
---- Create a new prelive.Watcher.
----@param dir string The directory to watch.
+---Create a new prelive.Watcher.
 ---@param interval? integer The interval to poll for changes in milliseconds.
 ---@return prelive.Watcher
-function Watcher:new(dir, interval)
+function Watcher:new(interval)
   local obj = {}
   obj._interval = interval or DEFAULT_POLLING_INTERVAL
-  obj._dir = vim.fs.normalize(dir)
   obj._timer = vim.uv.new_timer()
   obj._watch_files = {}
 
@@ -23,10 +19,12 @@ function Watcher:new(dir, interval)
   return obj
 end
 
---- start watching the directory.
+---Start watching the files.
+---When the file is modified, the callback function is called with the path of the file.
+---The files to watch are added with `add_watch_file`.
 ---@param callback fun(path: string)
 function Watcher:watch(callback)
-  --- Polling for changes in the specified files.
+  -- Polling for changes in the specified files.
   local function on_timeout()
     for file, entry in pairs(self._watch_files) do
       vim.uv.fs_stat(file, function(err, stat)
@@ -40,6 +38,8 @@ function Watcher:watch(callback)
   self._timer:start(0, DEFAULT_POLLING_INTERVAL, vim.schedule_wrap(on_timeout))
 end
 
+---Add a file to watch.
+---@param file string The file to watch.
 function Watcher:add_watch_file(file)
   file = vim.fs.normalize(file)
   if self._watch_files[file] then
