@@ -36,7 +36,7 @@ end
 ---@field _server uv_tcp_t
 ---@field _default_host string
 ---@field _options prelive.http.ServerOptions
----@field _connections uv_tcp_t[]
+---@field _connections { socket: uv_tcp_t , reader: prelive.StreamReader }[]
 local HTTPServer = {}
 
 ---@alias prelive.http.Server.Middleware { name?:string, pattern: string, method?: string, handler: prelive.http.MiddlewareHandler}
@@ -124,7 +124,6 @@ function HTTPServer:_handle_connection_async()
   local client = vim.uv.new_tcp()
   self._server:accept(client)
   local client_ip = client:getpeername().ip
-  table.insert(self._connections, client)
 
   -- create connection timer and start it.
   -- close connection if no data is received within the timeout.
@@ -138,11 +137,14 @@ function HTTPServer:_handle_connection_async()
 
   -- create reader
   -- restart connection timer when reader receives data.
-  local reader = StremReader:new(client)
+  local reader = StremReader:new(client, coroutine.running())
   reader.on_receive = function()
     connection_timer:stop()
     connection_timer:start(self._options.keep_alive_timeout, 0, on_connection_timeout)
   end
+
+  -- add connection entry
+  table.insert(self._connections, { socket = client, reader = reader })
 
   -- receive loop
   while true do
@@ -150,7 +152,9 @@ function HTTPServer:_handle_connection_async()
     local res = response:new(client)
     local req, err_status, err_msg = request.read_request_async(reader, client_ip, self._default_host)
     if not req then
-      res:write(err_msg or "", nil, err_status or status.BAD_REQUEST)
+      if not client:is_closing() then
+        res:write(err_msg or "", nil, err_status or status.BAD_REQUEST)
+      end
       break
     end
 
@@ -182,7 +186,8 @@ end
 ---@param conn uv_tcp_t
 function HTTPServer:_remove_connection_entry(conn)
   for i = 1, #self._connections do
-    if self._connections[i] == conn then
+    if self._connections[i].socket == conn then
+      self._connections[i].reader:close()
       table.remove(self._connections, i)
       break
     end
@@ -358,9 +363,8 @@ end
 --- Close server
 function HTTPServer:close()
   for i = #self._connections, 1, -1 do
-    if not self._connections[i]:is_closing() then
-      self._connections[i]:close()
-    end
+    -- close reader and remove connection entry
+    self._connections[i].reader:close()
     table.remove(self._connections, i)
   end
   self._server:close()
