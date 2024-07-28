@@ -7,9 +7,6 @@ local defaults = {
     host = "127.0.0.1",
     port = 2255,
   },
-  open = {
-    cmd = "explorer",
-  },
   logger = {
     notify_level = vim.log.levels.INFO,
     file_level = vim.log.levels.DEBUG,
