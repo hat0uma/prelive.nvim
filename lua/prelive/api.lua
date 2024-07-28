@@ -38,7 +38,7 @@ end
 ---@param dir string
 ---@param file string | nil The file to open. Specify it as a relative path from dir.
 ---@param opts prelive.Config | nil
-function M.start(dir, file, opts)
+function M.go(dir, file, opts)
   vim.validate({
     dir = { dir, "string" },
     file = { file, "string", true },
@@ -82,7 +82,11 @@ function M.start(dir, file, opts)
       url = vim.fs.joinpath(url, file)
     end
   end
-  webbrowser.open_system(url):wait()
+  webbrowser.open_system(url, function(obj)
+    if obj.code ~= 0 then
+      log.error("Failed to open the browser: %s", obj.stderr)
+    end
+  end)
 end
 
 ---Select a served directory.
@@ -100,12 +104,21 @@ local function select_served_directories(prompt, on_select)
     return
   end
 
+  -- calculate the width of the url for formatting.
+  local create_format_item = function()
+    local url_width = 0
+    for _, dir in ipairs(directories) do
+      url_width = math.max(url_width, vim.fn.strdisplaywidth(dir.url))
+    end
+    return function(item)
+      return string.format("%-" .. url_width .. "s    %s", item.url, item.dir)
+    end
+  end
+
   --- Select a directory and call on_select.
   vim.ui.select(directories, {
     prompt = prompt,
-    format_item = function(item)
-      return item.url .. "    " .. item.dir
-    end,
+    format_item = create_format_item(),
   }, function(selected)
     if not selected then
       return
@@ -114,21 +127,25 @@ local function select_served_directories(prompt, on_select)
   end)
 end
 
-function M.show()
+function M.status()
   select_served_directories("Select a directory to open.", function(selected)
-    webbrowser.open_system(selected.url):wait()
+    webbrowser.open_system(selected.url, function(obj)
+      if obj.code ~= 0 then
+        log.error("Failed to open the browser: %s", obj.stderr)
+      end
+    end)
   end)
 end
 
-function M.select_stop()
-  select_served_directories("Select a directory to stop serving.", function(selected)
-    M.stop(selected.dir)
+function M.select_close()
+  select_served_directories("Select a directory to close serving.", function(selected)
+    M.close(selected.dir)
   end)
 end
 
 ---Stop serving the directory. if the directory is not specified, stop all.
 ---@param dir string | nil
-function M.stop(dir)
+function M.close(dir)
   vim.validate({ dir = { dir, "string", true } })
   if not M._server then
     log.warn("The server is not running.")

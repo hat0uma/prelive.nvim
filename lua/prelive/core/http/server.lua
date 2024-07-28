@@ -336,7 +336,7 @@ end
 --- Add a static file middleware.
 ---@param path string the path prefix of static files.
 ---@param rootdir string the root directory of static files. it should be an absolute path.
----@param prewrite (fun(res:prelive.http.Response,body:string):string)?
+---@param prewrite? prelive.http.middleware.static_prewrite the prewrite hook function.
 ---@param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
 function HTTPServer:use_static(path, rootdir, prewrite, name)
   if not vim.endswith(path, "/") then
@@ -357,13 +357,14 @@ end
 
 --- Close server
 function HTTPServer:close()
-  self._server:close()
   for i = #self._connections, 1, -1 do
     if not self._connections[i]:is_closing() then
       self._connections[i]:close()
     end
     table.remove(self._connections, i)
   end
+  self._server:close()
+  self._server = nil
 end
 
 return HTTPServer

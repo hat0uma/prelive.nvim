@@ -1,4 +1,5 @@
 local M = {}
+local log = require("prelive.core.log")
 
 ---@class prelive.Config
 local defaults = {
@@ -31,10 +32,14 @@ local options
 
 --- Setup config
 ---@param opts? prelive.Config
----@return prelive.Config
 function M.setup(opts)
   options = vim.tbl_deep_extend("force", {}, defaults, opts or {})
-  return options
+
+  -- create a logger and set it as the default logger.
+  local logger = log.new_logger()
+  logger.add_notify_handler(options.logger.notify_level, options.logger.notify)
+  logger.add_file_handler(options.logger.file_level, options.logger.file)
+  log.set_default(logger)
 end
 
 --- Get config

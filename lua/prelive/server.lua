@@ -1,3 +1,4 @@
+local Watcher = require("prelive.watcher")
 local http = require("prelive.core.http")
 local log = require("prelive.core.log")
 
@@ -31,11 +32,11 @@ local INJECT_JS_TEMPLATE = [[
 
 ---This class provides file-serving functionality with auto-reloading capabilities.
 ---It embeds JavaScript for auto-reloading in the HTML files served.
----When the server detects changes in the served directories, it notifies the browser to reload the page.
----If you want to notify the server of updates manually, use the `notify_update` method.
+---Any file that has been accessed even once becomes a monitored target. When a monitored file is updated, the browser will prompt a reload.
+---To manually notify the server of updates, use the `notify_update` method.
 ---@class prelive.PreLiveServer
 ---@field _instance prelive.http.Server | nil
----@field _dirs table<integer, { dir: string, update_detected: boolean, watch_handle?: uv_fs_event_t }>
+---@field _dirs table<integer, { dir: string, update_detected: boolean, watcher?: prelive.Watcher }>
 ---@field _next_id integer
 ---@field _host string
 ---@field _port integer
@@ -99,24 +100,22 @@ function PreLiveServer:add_directory(dir, watch)
     return self:_get_url(directory_id)
   end
 
-  -- Watch changes in the directory.
-  local watch_handle = nil
-  if watch then
-    local err_name, err_msg
-    watch_handle, err_name, err_msg = self:_watch_changes(dir)
-    if not watch_handle then
-      log.error("Failed to start watching %s: %s %s", dir, err_name, err_msg)
-      return nil
-    end
-  end
-
   -- Assign an id to the directory.
   directory_id = self._next_id
   self._next_id = self._next_id + 1
-  self._dirs[directory_id] = { dir = dir, update_detected = false, watch_handle = watch_handle }
+  self._dirs[directory_id] = { dir = dir, update_detected = false }
+  local path = self:_get_serve_path(directory_id)
+
+  -- Watch changes in the directory.
+  if watch then
+    self._instance:use(path, self:_track_changes(dir, path, directory_id))
+    self._dirs[directory_id].watcher = Watcher:new(dir)
+    self._dirs[directory_id].watcher:watch(function()
+      self:notify_update(dir)
+    end)
+  end
 
   -- Serve the directory.
-  local path = self:_get_serve_path(directory_id)
   self._instance:use_static(path, dir, self:_create_prewrite_static(directory_id), path)
   return self:_get_url(directory_id)
 end
@@ -132,8 +131,8 @@ function PreLiveServer:remove_directory(dir)
 
   -- Close the watch handle.
   local entry = self._dirs[directory_id]
-  if entry.watch_handle then
-    entry.watch_handle:close()
+  if entry.watcher then
+    entry.watcher:close()
   end
 
   -- Remove the middleware.
@@ -209,6 +208,11 @@ function PreLiveServer:_handle_update(req, res)
   timer:start(CHECK_INTERVAL, CHECK_INTERVAL, function()
     elapsed = elapsed + CHECK_INTERVAL
 
+    if not self._dirs[id] then
+      coroutine.resume(thread, http.status.INTERNAL_SERVER_ERROR)
+      return
+    end
+
     if elapsed >= TIMEOUT then
       coroutine.resume(thread, http.status.NOT_MODIFIED)
       return
@@ -241,15 +245,12 @@ end
 
 --- Create a prewrite hook function for static files.
 ---@param id integer The id of the directory.
----@return fun(res: prelive.http.Response, body: string): string
+---@return prelive.http.middleware.static_prewrite
 function PreLiveServer:_create_prewrite_static(id)
   local inject_js = INJECT_JS_TEMPLATE:gsub("{directory_id}", id)
 
   --- prewrite hook function for static files.
-  ---@param res prelive.http.Response
-  ---@param body string
-  ---@return string body
-  return function(res, body)
+  return function(res, filename, body)
     if res.headers:get("Content-Type") ~= "text/html" then
       return body
     end
@@ -267,6 +268,33 @@ function PreLiveServer:_create_prewrite_static(id)
   end
 end
 
+--- Create a middleware to track changes in the directory.
+---@param dir string The directory to watch.
+---@param path string The path to serve.
+---@param directory_id integer The id of the directory.
+---@return prelive.http.MiddlewareHandler middleware
+function PreLiveServer:_track_changes(dir, path, directory_id)
+  local track_status = {
+    [http.status.OK] = true,
+    [http.status.NOT_FOUND] = true,
+    [http.status.NOT_MODIFIED] = true,
+  }
+  ---@async
+  return function(req, res, donext)
+    donext(req, res)
+
+    -- track the requested files.
+    local requested_path = req.path:gsub("^" .. path, "")
+    local status = res:get_status()
+    if track_status[status] then
+      local file = vim.fs.joinpath(dir, requested_path)
+      if self._dirs[directory_id] and self._dirs[directory_id].watcher then
+        self._dirs[directory_id].watcher:add_watch_file(file)
+      end
+    end
+  end
+end
+
 --- Get the path to serve the directory.
 ---@param id integer The id of the directory.
 ---@return string path
@@ -279,27 +307,6 @@ end
 ---@return string url
 function PreLiveServer:_get_url(id)
   return string.format("http://%s:%d%s", self._host, self._port, self:_get_serve_path(id))
-end
-
---- Watch changes in the directory.
----@param dir string
----@return uv_fs_event_t? watch_handle, string? err_name, string? err_msg
-function PreLiveServer:_watch_changes(dir)
-  local watch_handle, err_name, err_msg = vim.uv.new_fs_event()
-  if not watch_handle then
-    return nil, err_name, err_msg
-  end
-
-  watch_handle:start(dir, { recursive = true }, function(err, filename, events)
-    if err then
-      log.error("Failed to watch %s: %s", dir, err)
-      return
-    end
-    if filename then
-      self:notify_update(dir)
-    end
-  end)
-  return watch_handle
 end
 
 return PreLiveServer

@@ -26,6 +26,8 @@ local function render_directory(directory, path)
   return table.concat(body, "\r\n")
 end
 
+--- @alias prelive.http.middleware.static_prewrite fun(res:prelive.http.Response,filename:string,body:string):string
+
 --- Check file is not modified
 ---@param req prelive.http.Request
 ---@param stat uv.aliases.fs_stat_table
@@ -44,7 +46,7 @@ end
 ---Serve static files.
 ---@param path string The path prefix of static files.
 ---@param rootdir string The root directory of static files. It should be an absolute path.
----@param prewrite (fun(res:prelive.http.Response,body:string):string)?
+---@param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
 ---@param req prelive.http.Request The request object.
 ---@param res prelive.http.Response The response object.
 local function serve_static(path, rootdir, prewrite, req, res)
@@ -73,8 +75,9 @@ local function serve_static(path, rootdir, prewrite, req, res)
 
   -- if directory, render directory listing
   if stat.type == "directory" then
+    local body = render_directory(file, requested_path)
     res.headers:set("Content-Type", "text/html")
-    res:write(render_directory(file, requested_path))
+    res:write(body)
     return
   end
 
@@ -123,7 +126,7 @@ local function serve_static(path, rootdir, prewrite, req, res)
   res.headers:set("Last-Modified", last_modified)
   res.headers:set("Content-Length", tostring(stat.size))
   if prewrite then
-    data = prewrite(res, data)
+    data = prewrite(res, file, data)
   end
   res:write(data)
 end
@@ -131,12 +134,13 @@ end
 --- A middleware that serves static files.
 ---@param path string The path prefix of static files.
 ---@param rootdir string The root directory of static files. It should be an absolute path.
----@param prewrite (fun(res:prelive.http.Response,body:string):string)?
+---@param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
 ---@return prelive.http.MiddlewareHandler
 return function(path, rootdir, prewrite)
   vim.validate({
     path = { path, "string" },
     rootdir = { rootdir, { "string" } },
+    prewrite = { prewrite, { "function", true } },
   })
 
   rootdir = vim.fs.normalize(rootdir)
