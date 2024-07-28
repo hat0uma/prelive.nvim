@@ -16,6 +16,7 @@
 
 --- @class prelive.log.Handler
 --- @field write fun(self: prelive.log.Handler, record: prelive.log.Record)
+--- @field close fun(self: prelive.log.Handler)
 
 ------------------------------------------------------------------------
 -- StringFormatter
@@ -94,6 +95,7 @@ local FileHandler = {}
 ---@return prelive.log.FileHandler
 function FileHandler:new(options, formatter)
   options = vim.tbl_deep_extend("force", file_handler_default_options, options)
+  options.file_path = vim.fs.normalize(options.file_path)
 
   local obj = {}
   obj._fd = nil --- @type number?
@@ -117,16 +119,16 @@ function FileHandler:write(record)
 end
 
 function FileHandler:close()
-  vim.uv.fs_close(self._fd)
-  self._fd = nil
+  if self._fd then
+    assert(vim.uv.fs_close(self._fd))
+    self._fd = nil
+  end
 end
 
 function FileHandler:rotate()
   self:_ensure_open()
-  local stat = vim.uv.fs_fstat(self._fd)
-  if not stat then
-    return
-  end
+  local stat, err_msg = vim.uv.fs_fstat(self._fd)
+  assert(stat, err_msg)
 
   -- check if log file size exceeds the limit
   if stat.size < self._options.max_file_size then
@@ -135,7 +137,7 @@ function FileHandler:rotate()
 
   -- if max_backups is 0, truncate log file
   if self._options.max_backups == 0 then
-    assert(vim.uv.fs_ftruncate(self._fd, 0))
+    self:_truncate()
     return
   end
 
@@ -146,19 +148,31 @@ function FileHandler:rotate()
   --   foo.log   -> foo.log.1
   self:close()
   for i = self._options.max_backups, 1, -1 do
-    local old_file = self._options.file_path
-    if i > 1 then
-      old_file = old_file .. "." .. i - 1
-    end
-    local new_file = self._options.file_path .. "." .. i
+    local old_file = self:_get_file_name(i - 1)
+    local new_file = self:_get_file_name(i)
 
-    if vim.uv.fs_stat(old_file) then
+    -- rename old file to new file
+    local err_name
+    stat, err_msg, err_name = vim.uv.fs_stat(old_file)
+    if stat then
       vim.uv.fs_rename(old_file, new_file)
+    elseif err_name ~= "ENOENT" then
+      error(string.format("Failed to rotate log: %s", err_msg))
     end
   end
 
   -- open log file again
   self:_ensure_open()
+end
+
+--- Get a file name.
+---@param backup integer
+---@return string
+function FileHandler:_get_file_name(backup)
+  if backup == 0 then
+    return self._options.file_path
+  end
+  return self._options.file_path .. "." .. backup
 end
 
 function FileHandler:_ensure_open()
@@ -171,6 +185,14 @@ function FileHandler:_ensure_open()
   if not self._fd then
     error("failed to open log file: " .. self._options.file_path .. " " .. err)
   end
+end
+
+function FileHandler:_truncate()
+  -- close and open file
+  self:close()
+  local err_msg
+  self._fd, err_msg = vim.uv.fs_open(self._options.file_path, "w", 438)
+  assert(self._fd, err_msg)
 end
 
 ------------------------------------------------------------------------
@@ -213,6 +235,9 @@ function NotifyHandler:write(record)
     replace = self._last_notification,
   })
 end
+
+--- Close the handler.
+function NotifyHandler:close() end
 
 ------------------------------------------------------------------------
 -- APIs
@@ -342,6 +367,13 @@ function M.new_logger(handlers)
   ---@param ... any
   function Logger.trace(format, ...)
     Logger.write(vim.log.levels.TRACE, format, ...)
+  end
+
+  --- Close all handlers.
+  function Logger.close()
+    for _, iter in ipairs(Logger.handlers) do
+      iter.handler:close()
+    end
   end
 
   return Logger
