@@ -1,4 +1,4 @@
-vim.api.nvim_create_user_command("PreliveGo", function(opts)
+vim.api.nvim_create_user_command("PreLiveGo", function(opts)
   local params = vim.split(opts.args, "%s+", { trimempty = true })
   if #params > 2 then
     print("Too many arguments")
@@ -40,18 +40,18 @@ vim.api.nvim_create_user_command("PreliveGo", function(opts)
   require("prelive.api").go(dir, file)
 end, { nargs = "*", complete = "file" })
 
-vim.api.nvim_create_user_command("PreliveStatus", function()
+vim.api.nvim_create_user_command("PreLiveStatus", function()
   require("prelive.api").status()
 end, {})
 
-vim.api.nvim_create_user_command("PreliveClose", function()
+vim.api.nvim_create_user_command("PreLiveClose", function()
   require("prelive.api").select_close()
 end, {})
 
-vim.api.nvim_create_user_command("PreliveCloseAll", function()
+vim.api.nvim_create_user_command("PreLiveCloseAll", function()
   require("prelive.api").close(nil)
 end, {})
 
-vim.api.nvim_create_user_command("PreliveLog", function()
+vim.api.nvim_create_user_command("PreLiveLog", function()
   require("prelive.api").open_log()
 end, {})
