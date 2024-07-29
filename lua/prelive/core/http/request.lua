@@ -175,9 +175,12 @@ local function read_chunked_body(reader)
     -- NOTE: Since CRLF is not included in the chunk size, line breaks are discarded after reading the specified size.
     local chunk_body
     chunk_body, err_msg = reader:read_async(chunk_size)
-    reader:readline_async() -- skip CRLF after body
-    if not line then
+    if not chunk_body then
       return nil, nil, err_msg
+    end
+    -- skip CRLF after chunk body
+    if (reader:readline_async()) ~= "" then
+      return nil, status.BAD_REQUEST, "Chunk size is wrong."
     end
     table.insert(body, chunk_body)
   end

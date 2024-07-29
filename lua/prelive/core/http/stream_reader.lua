@@ -116,7 +116,8 @@ function StreamReader:_read_and_pop_async(read_fn)
   end
 
   -- otherwise, read from the stream
-  self._stream:read_start(vim.schedule_wrap(function(err, data)
+  assert(not self._reading)
+  local read_start_ok, read_start_err = self._stream:read_start(vim.schedule_wrap(function(err, data)
     if err then
       return coroutine.resume(self._thread, nil, err)
     end
@@ -138,6 +139,10 @@ function StreamReader:_read_and_pop_async(read_fn)
     end
   end))
 
+  if not read_start_ok then
+    return nil, read_start_err
+  end
+
   -- Wait until resume in the callback of `start_read`.
   self._reading = true
   local data, err = coroutine.yield() ---@type string? ,string?
@@ -157,8 +162,10 @@ function StreamReader:close()
     self._stream:close()
   end
 
-  if self._reading and coroutine.status(self._thread) == "suspended" then
-    coroutine.resume(self._thread, nil, "stream closed.")
+  if self._reading then
+    vim.schedule(function()
+      assert(coroutine.resume(self._thread, nil, "stream closed."))
+    end)
   end
 end
 
