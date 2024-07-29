@@ -2,7 +2,7 @@
 
 **The plugin is currently a work in progress (WIP).**
 
-`prelive.nvim` is a luv-based server that automatically reloads static pages.
+`prelive.nvim` is a simple luv-based development server with live reloading for Neovim.
 
 ## Features
 
@@ -11,8 +11,8 @@
 - Requests are processed asynchronously, so they won't interrupt your editing.
 - Offers an API for integration with other plugins, allowing you to build more advanced workflows.
 
-> [!WARNING]
-> For security reasons, it is strongly recommended to use this plugin only in a trusted environment.
+> [!NOTE]
+> For security reasons, it is recommended to use this plugin only in a trusted environment.
 
 ## Requirements
 
