@@ -31,11 +31,11 @@ local function remove_test_files()
 end
 
 describe("log.handlers.FileHandler", function()
-  local function create_handler(max_backups)
+  local function create_handler(max_backups, max_file_size)
     return log.handlers.FileHandler:new({
       file_path = vim.fs.joinpath(TEST_LOG_DIR, "test.log"),
       max_backups = max_backups or 3,
-      max_file_size = 1024,
+      max_file_size = max_file_size or 1024,
     }, log.formatters.StringFormatter:new("{level} {message}"))
   end
 
@@ -59,6 +59,17 @@ describe("log.handlers.FileHandler", function()
         time = os.time(),
       })
       assert.are_equal("INFO  Hello, world!\n", read_test_file("test.log"))
+    end)
+
+    it("should not create log file if max_file_size is 0", function()
+      handler = create_handler(3, 0)
+      handler:write({ level = vim.log.levels.INFO, message = "aaaa", time = os.time() })
+      handler:write({ level = vim.log.levels.INFO, message = "bbbb", time = os.time() })
+      handler:write({ level = vim.log.levels.INFO, message = "cccc", time = os.time() })
+
+      assert.is_nil(vim.loop.fs_stat(vim.fs.joinpath(TEST_LOG_DIR, "test.log")))
+      assert.is_nil(vim.loop.fs_stat(vim.fs.joinpath(TEST_LOG_DIR, "test.log.1")))
+      assert.is_nil(vim.loop.fs_stat(vim.fs.joinpath(TEST_LOG_DIR, "test.log.2")))
     end)
   end)
 

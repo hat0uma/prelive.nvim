@@ -110,6 +110,10 @@ end
 --- Write a record to log file.
 ---@param record prelive.log.Record
 function FileHandler:write(record)
+  if self._options.max_file_size <= 0 then
+    return
+  end
+
   self:_ensure_open()
   self:rotate()
 
@@ -126,6 +130,10 @@ function FileHandler:close()
 end
 
 function FileHandler:rotate()
+  if self._options.max_file_size <= 0 then
+    return
+  end
+
   self:_ensure_open()
   local stat, err_msg = vim.uv.fs_fstat(self._fd)
   assert(stat, err_msg)
@@ -267,7 +275,7 @@ local M = {}
 -- log.info("Hello, World!")
 -- log.error("Something went wrong!")
 -- ```
----@param handlers ({level: integer?, handler: prelive.log.Handler}[])?
+---@param handlers ({level: integer, handler: prelive.log.Handler}[])?
 ---@return prelive.log.Logger
 function M.new_logger(handlers)
   --- @class prelive.log.Logger
@@ -280,6 +288,11 @@ function M.new_logger(handlers)
   ---@param handler prelive.log.Handler
   ---@param level integer Log level.
   function Logger.add_handler(handler, level)
+    vim.validate({
+      level = { level, "number" },
+      handler = { handler, "table" },
+    })
+
     table.insert(Logger.handlers, { level = level, handler = handler })
   end
 
