@@ -12,7 +12,7 @@ local VALID_HTTP_METHODS = { "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS" }
 --- @field body string
 --- @field fragment string
 --- @field client_ip string
---- @field _query string
+--- @field query string
 local HTTPRequest = {}
 
 --- Create a new HTTPRequest object.
@@ -28,7 +28,7 @@ function HTTPRequest:new(param)
   obj.fragment = param.fragment
   obj.client_ip = param.client_ip
   obj.protocol = "http"
-  obj._query = param.query
+  obj.query = param.query
 
   setmetatable(obj, self)
   self.__index = self
@@ -44,7 +44,7 @@ end
 ---@async
 ---Parse HTTP request line.
 ---@param reader prelive.StreamReader
----@return {method:string,path:string,version:string, query:string }? request, integer? err_status, string? err_msg
+---@return {method:string,path:string,version:string, query:string, fragment:string }? request, integer? err_status, string? err_msg
 local function read_request_line_async(reader)
   local line, err_msg = reader:readline_skip_empty_async()
   if not line then
@@ -74,13 +74,13 @@ local function read_request_line_async(reader)
   end
 
   -- parse path
-  -- NOTE: The fragment should not exist in the request, so discard it.
   local path_elems = url.parse(path)
   return {
     version = version,
     method = method,
     path = path_elems.base,
     query = path_elems.query,
+    fragment = path_elems.fragment,
   }
 end
 
@@ -307,7 +307,7 @@ local function read_request_async(reader, client_ip, default_host)
     path = url.decode(request_line.path),
     version = request_line.version,
     client_ip = client_ip,
-    fragment = "",
+    fragment = request_line.fragment,
     query = request_line.query,
   })
 end
