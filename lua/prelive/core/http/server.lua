@@ -371,4 +371,18 @@ function HTTPServer:close()
   self._server = nil
 end
 
+--- Get bound port.
+--- This is useful when the port is set to 0 (random port).
+---@return integer? port, string? err
+function HTTPServer:get_bound_port()
+  if not self._server then
+    return nil
+  end
+  local addr = self._server:getsockname()
+  if not addr then
+    return nil
+  end
+  return addr.port
+end
+
 return HTTPServer

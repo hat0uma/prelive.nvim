@@ -59,11 +59,8 @@ function PreLiveServer:new(host, port)
   return obj
 end
 
---- Serve files in the given directory.
----@param dir string The directory to serve.
----@param watch boolean Whether to watch changes in the directory. if false, you need to call `notify_update` manually.
----@return string? url The URL of the preview file or directory.
-function PreLiveServer:start_serve(dir, watch)
+--- Serve the server.
+function PreLiveServer:start_serve()
   if self._instance then
     log.error("Server is already started.")
     return nil
@@ -77,9 +74,7 @@ function PreLiveServer:start_serve(dir, watch)
   end)
 
   -- Serve the directory.
-  local url = self:add_directory(dir, watch)
   self._instance:start_serve()
-  return url
 end
 
 --- Add a directory to serve.
@@ -306,7 +301,7 @@ end
 ---@param id integer The id of the directory.
 ---@return string url
 function PreLiveServer:_get_url(id)
-  return string.format("http://%s:%d%s", self._host, self._port, self:_get_serve_path(id))
+  return string.format("http://%s:%d%s", self._host, self._instance:get_bound_port(), self:_get_serve_path(id))
 end
 
 return PreLiveServer

@@ -20,19 +20,6 @@ local function register_close_on_leave()
   })
 end
 
---- Start the server and add the directory.
----@param dir string
----@param opts prelive.Config
----@return string | nil url
-local function start_serve(dir, opts)
-  if not M._server then
-    M._server = PreLiveServer:new(opts.server.host, opts.server.port)
-    register_close_on_leave()
-    return M._server:start_serve(dir, true)
-  end
-  return M._server:add_directory(dir, true)
-end
-
 --- Start live.
 --- If the file is specified, open the file in the browser.
 ---@param dir string
@@ -67,7 +54,12 @@ function M.go(dir, file, opts)
   end
 
   -- start the server.
-  local top_page = start_serve(dir, opts)
+  if not M._server then
+    M._server = PreLiveServer:new(opts.server.host, opts.server.port)
+    register_close_on_leave()
+    M._server:start_serve()
+  end
+  local top_page = M._server:add_directory(dir, true)
   if not top_page then
     return
   end
