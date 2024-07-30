@@ -6,13 +6,23 @@ M.LOG_FILE_PATH = vim.fs.joinpath(vim.fn.stdpath("log"), "prelive.log")
 ---@class prelive.Config
 local defaults = {
   server = {
+    --- The host to bind the server to.
+    --- It is strongly recommended not to expose it to the external network.
     host = "127.0.0.1",
+    --- The port to bind the server to.
+    --- If the value is 0, the server will bind to a random port.
     port = 2255,
   },
   log = {
+    --- The log levels to print.
+    --- The log levels are defined in `vim.log.levels`. see `vim.log.levels`.
     print_level = vim.log.levels.WARN,
+    --- The log levels to write to the log file. see `vim.log.levels`.
     file_level = vim.log.levels.DEBUG,
+    --- The maximum size of the log file in bytes.
+    --- If 0, it does not output.
     max_file_size = 1 * 1024 * 1024,
+    --- The maximum number of log files to keep.
     max_backups = 3,
   },
 }
