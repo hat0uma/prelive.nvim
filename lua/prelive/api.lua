@@ -169,8 +169,7 @@ function M.close(dir)
 end
 
 function M.open_log()
-  local opts = config.get()
-  vim.cmd("tabedit " .. opts.logger.file.file_path)
+  vim.cmd("tabedit " .. config.LOG_FILE_PATH)
 end
 
 return M
