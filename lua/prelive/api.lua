@@ -8,18 +8,6 @@ local M = {
   _server = nil,
 }
 
-local function register_close_on_leave()
-  vim.api.nvim_create_autocmd({ "VimLeavePre" }, {
-    callback = function()
-      if M._server then
-        M._server:close()
-      end
-    end,
-    group = vim.api.nvim_create_augroup("prelive_server_close", {}),
-    desc = "Close the prelive server on VimLeavePre.",
-  })
-end
-
 --- Start live.
 --- If the file is specified, open the file in the browser.
 ---@param dir string
@@ -56,7 +44,6 @@ function M.go(dir, file, opts)
   -- start the server.
   if not M._server then
     M._server = PreLiveServer:new(opts.server.host, opts.server.port)
-    register_close_on_leave()
     M._server:start_serve()
   end
   local top_page = M._server:add_directory(dir, true)

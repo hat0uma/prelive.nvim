@@ -40,6 +40,7 @@ local INJECT_JS_TEMPLATE = [[
 ---@field _next_id integer
 ---@field _host string
 ---@field _port integer
+---@field _cleanup_autocmd integer?
 local PreLiveServer = {}
 
 --- Create a new prelive.PreLiveServer.
@@ -53,6 +54,7 @@ function PreLiveServer:new(host, port)
   obj._instance = nil ---@type prelive.http.Server | nil
   obj._host = host
   obj._port = port
+  obj._cleanup_autocmd = nil ---@type integer | nil
 
   setmetatable(obj, self)
   self.__index = self
@@ -65,6 +67,14 @@ function PreLiveServer:start_serve()
     log.error("Server is already started.")
     return nil
   end
+
+  -- Register an autocmd to close the server on VimLeavePre.
+  self._cleanup_autocmd = vim.api.nvim_create_autocmd("VimLeavePre", {
+    desc = "Close the prelive server on VimLeavePre.",
+    callback = function()
+      self:close()
+    end,
+  })
 
   -- Create a new server instance. and serve the update endpoint.
   self._instance = http.Server:new(self._host, self._port)
@@ -171,6 +181,12 @@ function PreLiveServer:close()
   if self._instance then
     self._instance:close()
     self._instance = nil
+  end
+
+  -- Remove the autocmd.
+  if self._cleanup_autocmd then
+    vim.api.nvim_del_autocmd(self._cleanup_autocmd)
+    self._cleanup_autocmd = nil
   end
 end
 
