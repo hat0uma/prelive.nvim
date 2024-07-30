@@ -9,6 +9,11 @@ local status = require("prelive.core.http.status")
 ---@return string body The rendered directory listing.
 local function render_directory(directory, path)
   local body = {
+    "<!DOCTYPE html>",
+    '<html lang="en">',
+    "<head>",
+    '<meta charset="utf-8">',
+    "</head>",
     "<h1>Index of " .. path .. "</h1>",
     "<hr>",
     "<ul>",
