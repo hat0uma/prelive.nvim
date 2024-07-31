@@ -9,24 +9,24 @@ vim.api.nvim_create_user_command("PreLiveGo", function(opts)
   dir, file = params[1], params[2]
   dir = dir or vim.uv.cwd()
   file = file or vim.api.nvim_buf_get_name(0)
-  require("prelive.api").go(dir, file)
+  require("prelive").go(dir, file)
 end, {
   nargs = "*",
   complete = "file",
 })
 
 vim.api.nvim_create_user_command("PreLiveStatus", function()
-  require("prelive.api").status()
+  require("prelive").status()
 end, {})
 
 vim.api.nvim_create_user_command("PreLiveClose", function()
-  require("prelive.api").select_close()
+  require("prelive").select_close()
 end, {})
 
 vim.api.nvim_create_user_command("PreLiveCloseAll", function()
-  require("prelive.api").close(nil)
+  require("prelive").close(nil)
 end, {})
 
 vim.api.nvim_create_user_command("PreLiveLog", function()
-  require("prelive.api").open_log()
+  require("prelive").open_log()
 end, {})
