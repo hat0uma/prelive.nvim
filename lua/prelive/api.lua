@@ -9,36 +9,50 @@ local M = {
 }
 
 --- Start live.
---- If the file is specified, open the file in the browser.
+--- If the `file` is specified, open the file in the browser.
+--- `file` must be in the `dir`.
 ---@param dir string
----@param file string | nil The file to open. Specify it as a relative path from dir.
----@param opts prelive.Config | nil
-function M.go(dir, file, opts)
+---@param file? string The file to open. If nil, open the top page.
+---@param go_opts? { watch: boolean }
+function M.go(dir, file, go_opts)
   vim.validate({
     dir = { dir, "string" },
     file = { file, "string", true },
-    opts = { opts, "table", true },
+    go_opts = { go_opts, "table", true },
   })
 
-  opts = config.get(opts)
-  if file == "" then
-    file = nil
-  end
+  local opts = config.get()
+  go_opts = go_opts or { watch = true }
 
-  -- normalize paths
-  dir = vim.fs.normalize(dir)
-  if file then
-    file = vim.fs.normalize(file)
-  end
-
-  -- check input
-  if not vim.fn.isdirectory(dir) == 0 then
-    log.error("Directory not found: %s", dir)
+  -- check directory exists.
+  local result, err
+  result, err = vim.uv.fs_realpath(dir)
+  if not result then
+    log.error(err or (dir .. " is not found."))
     return
   end
-  if file and vim.fn.filereadable(vim.fs.joinpath(dir, file)) == 0 then
-    log.error("The file must be a relative path from the directory: %s", file)
+
+  dir = result
+  if vim.fn.isdirectory(dir) == 0 then
+    log.error("Not a Directory %s", dir)
     return
+  end
+
+  if file and file ~= "" then
+    -- check file exists.
+    result, err = vim.uv.fs_realpath(file)
+    if not result then
+      log.error(err or (file .. " is not found."))
+      return
+    end
+
+    -- check `file` is in the `dir`
+    if result:sub(1, #dir) == dir then
+      file = result:sub(#dir + 1)
+    else
+      log.warn("The file is not in the directory. Open the top page.")
+      file = nil
+    end
   end
 
   -- start the server.
@@ -46,7 +60,7 @@ function M.go(dir, file, opts)
     M._server = PreLiveServer:new(opts.server.host, opts.server.port)
     M._server:start_serve()
   end
-  local top_page = M._server:add_directory(dir, true)
+  local top_page = M._server:add_directory(dir, go_opts.watch)
   if not top_page then
     return
   end
@@ -54,7 +68,7 @@ function M.go(dir, file, opts)
   -- open the browser
   -- if file is html, open the file page. Otherwise, open the top page.
   local url = top_page
-  if file then
+  if file and file ~= "" then
     local ext = vim.fn.fnamemodify(file, ":e")
     local mime_type = mime.from_extension(ext)
     if mime_type == "text/html" then
