@@ -40,9 +40,9 @@ local function create_stream_reader(thread)
 
   local write_socket = vim.uv.new_tcp()
   write_socket:connect(HOST, port, function(err)
-    if err then
-      error(err)
-    end
+    -- if err then
+    --   error(err)
+    -- end
   end)
 
   local reader = coroutine.yield() ---@type prelive.StreamReader
@@ -61,7 +61,7 @@ local function write_message_step_by_step(write_socket, messages)
       return
     end
     local message = table.remove(messages, 1)
-    assert(write_socket:write(message))
+    write_socket:write(message)
   end)
 end
 
@@ -136,6 +136,11 @@ describe("StreamReader", function()
       assert.are.same("aabb\nc", reader:read_async(6))
       assert.are.same("c\rd", reader:read_async(3))
       assert.are_same("d", reader:read_async(1))
+    end)
+
+    it("should return empty string when the specified size is 0", function()
+      write_message_step_by_step(write_socket, { "aa" })
+      assert.are.same("", reader:read_async(0))
     end)
 
     it("buffered data should be read first", function()

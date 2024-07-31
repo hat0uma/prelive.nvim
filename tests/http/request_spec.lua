@@ -149,6 +149,7 @@ describe("read_request_async", function()
 
     define_request({
       "POST / HTTP/1.0",
+      "Content-Length: 0",
       "",
     })
     req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
@@ -157,6 +158,7 @@ describe("read_request_async", function()
 
     define_request({
       "PUT / HTTP/1.0",
+      "Content-Length: 0",
       "",
     })
     req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
@@ -165,6 +167,7 @@ describe("read_request_async", function()
 
     define_request({
       "DELETE / HTTP/1.0",
+      "Content-Length: 0",
       "",
     })
     req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
@@ -173,6 +176,7 @@ describe("read_request_async", function()
 
     define_request({
       "OPTIONS / HTTP/1.0",
+      "Content-Length: 0",
       "",
     })
     req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
@@ -329,6 +333,23 @@ describe("read_request_async", function()
     assert.are_equal(req.headers:get("Content-Length"), "13")
   end)
 
+  it("should be parsing request with Content-Length", function()
+    define_request({
+      "POST / HTTP/1.0",
+      "Content-Length: 13",
+      "",
+      "Hello, World!",
+    })
+
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    assert(req, err_msg)
+    assert.are_equal(req.method, "POST")
+    assert.are_equal(req.path, "/")
+    assert.are_equal(req.version, "HTTP/1.0")
+    assert.are_equal(req.body, "Hello, World!")
+    assert.are_equal(req.headers:get("Content-Length"), "13")
+  end)
+
   it("should reject if the Content-Length is empty", function()
     define_request({
       "POST / HTTP/1.0",
@@ -339,10 +360,11 @@ describe("read_request_async", function()
 
     local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
     assert.are_nil(req, err_msg)
-    assert.are_equal(err_code, status.BAD_REQUEST)
+    assert.are_equal(err_code, status.LENGTH_REQUIRED)
   end)
 
-  it("should reject if the Content-Length is not equal to the body length", function()
+  --
+  it("If the body is longer than the Content-Length, only read the Content-Length.", function()
     define_request({
       "POST / HTTP/1.0",
       "Content-Length: 12",
@@ -351,8 +373,8 @@ describe("read_request_async", function()
     })
 
     local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
-    assert.are_nil(req, err_msg)
-    assert.are_equal(err_code, status.BAD_REQUEST)
+    assert(req, err_msg)
+    assert.are_equal(req.body, "Hello, World")
   end)
 
   it("should reject if the Content-Length is negative", function()

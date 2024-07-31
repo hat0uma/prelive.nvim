@@ -113,8 +113,13 @@ local function read_headers_async(reader)
     if not delim then
       return nil, status.BAD_REQUEST, "Bad header syntax."
     end
+
+    -- header key and value
     local key = line:sub(1, delim - 1)
     local value = line:sub(delim_end + 1)
+    if key == "" then
+      return nil, status.BAD_REQUEST, "Bad header syntax."
+    end
     headers:set(key, value)
   end
   return headers
@@ -201,16 +206,48 @@ local function read_chunked_body(reader)
 end
 
 ---@async
+---Read body with specified size
+---@param reader prelive.StreamReader
+---@param content_length string
+---@return string? data ,integer? err_status, string? err_msg
+local function read_sized_body(reader, content_length)
+  -- check content-length
+  local size = tonumber(content_length, 10)
+  if not size then
+    return nil, status.BAD_REQUEST, "Invalid Content-Length."
+  end
+
+  if size < 0 then
+    return nil, status.BAD_REQUEST, "Invalid Content-Length."
+  end
+
+  -- read body
+  local data, err_msg = reader:read_async(size)
+  if not data then
+    return nil, nil, err_msg
+  end
+
+  return data
+end
+
+---@async
 ---Read request body
 ---@param reader prelive.StreamReader
 ---@param headers prelive.http.Headers
+---@param method string
 ---@return string? data ,integer? err_status, string? err_msg
-local function read_body(reader, headers)
+local function read_body(reader, headers, method)
   local content_length = headers:get("Content-Length")
   local transfer_encoding = headers:get("Transfer-Encoding")
+  content_length = content_length ~= "" and content_length or nil
+
   if content_length and transfer_encoding then
-    -- TODO
-    return nil, status.BAD_REQUEST, ""
+    return nil, status.BAD_REQUEST, "Both 'Content-Length' and 'Transfer-Encoding' are specified."
+  end
+
+  -- Content-Length or Transfer-Encoding required for methods other than GET and HEAD
+  if (not content_length and not transfer_encoding) and (method ~= "GET" and method ~= "HEAD") then
+    return nil, status.LENGTH_REQUIRED, "Content-Length or Transfer-Encoding required."
   end
 
   local err_msg = nil
@@ -218,18 +255,11 @@ local function read_body(reader, headers)
 
   local body = ""
   if content_length then
-    -- sized body
-    local size = tonumber(content_length)
-    if not size then
-      -- TODO
-      return nil, status.BAD_REQUEST, ""
-    end
-
-    -- TODO: should process remaining CRLF
+    -- content-length body
     local data
-    data, err_msg = reader:read_async(size)
+    data, err_status, err_msg = read_sized_body(reader, content_length)
     if not data then
-      return nil, nil, err_msg
+      return nil, err_status, err_msg
     end
     body = data
   elseif transfer_encoding and vim.stricmp(transfer_encoding, "chunked") == 0 then
@@ -295,7 +325,7 @@ local function read_request_async(reader, client_ip, default_host)
 
   -- read body
   local body
-  body, err_status, err_msg = read_body(reader, headers)
+  body, err_status, err_msg = read_body(reader, headers, request_line.method)
   if not body then
     return nil, err_status, err_msg
   end
