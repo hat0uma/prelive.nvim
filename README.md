@@ -11,7 +11,7 @@
 - Requests are processed asynchronously, so they won't interrupt your editing.
 - Offers an API for integration with other plugins, allowing you to build more advanced workflows.
 
-> [!NOTE]
+> [!IMPORTANT]
 > For security reasons, it is recommended to use this plugin only in a trusted environment.
 
 ## Requirements
