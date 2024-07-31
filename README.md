@@ -1,8 +1,10 @@
 # prelive.nvim
 
-**The plugin is currently a work in progress (WIP).**
-
 `prelive.nvim` is a simple luv-based development server with live reloading for Neovim.
+
+![prelive](https://github.com/user-attachments/assets/bc9b5ee5-22c8-4137-93c1-f0d964b67c72)
+
+**The plugin is currently a work in progress (WIP).**
 
 ## Features
 
