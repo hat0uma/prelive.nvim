@@ -239,7 +239,9 @@ function PreLiveServer:_handle_update(req, res)
   local code = coroutine.yield() ---@type number
   timer:close()
   res:write_header(code)
-  self._dirs[id].update_detected = false
+  if self._dirs[id] then
+    self._dirs[id].update_detected = false
+  end
 end
 
 --- Get the directory id.
