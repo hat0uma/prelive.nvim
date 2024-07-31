@@ -26,7 +26,7 @@ function M.go(dir, file, go_opts)
 
   -- check directory exists.
   local result, err
-  result, err = vim.uv.fs_realpath(dir)
+  result, err = vim.uv.fs_realpath(vim.fs.normalize(dir)) -- normalize for expand ~
   if not result then
     log.error(err or (dir .. " is not found."))
     return
@@ -40,7 +40,7 @@ function M.go(dir, file, go_opts)
 
   if file and file ~= "" then
     -- check file exists.
-    result, err = vim.uv.fs_realpath(file)
+    result, err = vim.uv.fs_realpath(vim.fs.normalize(file))
     if not result then
       log.error(err or (file .. " is not found."))
       return
@@ -72,7 +72,7 @@ function M.go(dir, file, go_opts)
     local ext = vim.fn.fnamemodify(file, ":e")
     local mime_type = mime.from_extension(ext)
     if mime_type == "text/html" then
-      url = vim.fs.joinpath(url, file)
+      url = vim.fs.joinpath(url, (file:gsub("\\", "/")))
     end
   end
   webbrowser.open_system(url, function(obj)
