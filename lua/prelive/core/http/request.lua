@@ -1,7 +1,9 @@
 local HTTPHeaders = require("prelive.core.http.headers")
 local status = require("prelive.core.http.status")
 local url = require("prelive.core.http.util.url")
+
 local VALID_HTTP_METHODS = { "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS" }
+local MAX_BODY_SIZE = 1024 * 1024 * 10 -- 10MB
 
 --- @class prelive.http.Request
 --- @field version string
@@ -167,7 +169,7 @@ local function read_chunked_body(reader)
     local chunk_head = vim.split(line, ";")
     -- TODO: currently skipping chunk-ext
     local chunk_size = tonumber(chunk_head[1], 16)
-    if not chunk_size then
+    if not chunk_size or chunk_size < 0 then
       return nil, status.BAD_REQUEST, "invalid chunk size format"
     end
 
@@ -212,13 +214,19 @@ end
 ---@return string? data ,integer? err_status, string? err_msg
 local function read_sized_body(reader, content_length)
   -- check content-length
-  local size = tonumber(content_length, 10)
-  if not size then
+  if content_length:match("^%d+$") == nil then
     return nil, status.BAD_REQUEST, "Invalid Content-Length."
   end
 
-  if size < 0 then
+  -- check content-length format
+  local size = tonumber(content_length, 10)
+  if not size or size < 0 then
     return nil, status.BAD_REQUEST, "Invalid Content-Length."
+  end
+
+  -- check body size
+  if size >= MAX_BODY_SIZE then
+    return nil, status.PAYLOAD_TOO_LARGE, string.format("Request must be less than %d bytes.", MAX_BODY_SIZE)
   end
 
   -- read body
