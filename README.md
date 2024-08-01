@@ -28,7 +28,7 @@ lazy.nvim:
 
 ```lua
 {
-  "hat0uma/prelive.nvim"
+  "hat0uma/prelive.nvim",
   opts = {},
   cmd = {
     "PreLiveGo",
