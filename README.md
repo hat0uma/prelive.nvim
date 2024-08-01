@@ -4,7 +4,7 @@
 
 ![prelive](https://github.com/user-attachments/assets/bc9b5ee5-22c8-4137-93c1-f0d964b67c72)
 
-**The plugin is currently a work in progress (WIP).**
+**This plugin is currently a work in progress (WIP) and the API may change.**
 
 ## Features
 
