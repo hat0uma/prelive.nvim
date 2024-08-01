@@ -15,9 +15,10 @@ function M.setup(opts)
 end
 
 --- Start live.
+--- Start the web server and begin serving files and watching for changes in the specified directory.
 --- If the `file` is specified, open the file in the browser.
 --- `file` must be in the `dir`.
----@param dir string
+---@param dir string The directory to serve.
 ---@param file? string The file to open. If nil, open the top page.
 ---@param go_opts? { watch: boolean }
 function M.go(dir, file, go_opts)
@@ -169,6 +170,34 @@ end
 
 function M.open_log()
   vim.cmd("tabedit " .. config.LOG_FILE_PATH)
+end
+
+--- Reload the page.
+--- Use this when you want to reload the page regardless of whether there are changes.
+--- This is intended to be used when `{watch = false}` is specified with `go()`.
+--- Please specify the directory you specified with `go()` for `dir`.
+---@param dir string The
+function M.reload(dir)
+  if not M._server then
+    log.warn("The server is not running.")
+    return
+  end
+
+  -- check directory exists.
+  local result, err
+  result, err = vim.uv.fs_realpath(vim.fs.normalize(dir)) -- normalize for expand ~
+  if not result then
+    log.error(err or (dir .. " is not found."))
+    return
+  end
+
+  dir = result
+  if vim.fn.isdirectory(dir) == 0 then
+    log.error("Not a Directory %s", dir)
+    return
+  end
+
+  M._server:notify_update(dir)
 end
 
 return M

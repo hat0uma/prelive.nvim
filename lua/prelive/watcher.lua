@@ -1,3 +1,8 @@
+--- This module monitors file changes.
+--- It detects changes in files by polling and invokes a callback function when changes are detected.
+--- Initially, I used `vim.uv.fs_event`, but it didn't work correctly across different platforms and
+--- it became slow when there were many files. Therefore, I switched to polling specific files instead.
+
 local DEFAULT_POLLING_INTERVAL = 100
 
 ---@class prelive.Watcher
