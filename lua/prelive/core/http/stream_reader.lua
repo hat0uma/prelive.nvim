@@ -6,6 +6,10 @@
 ---@field on_receive fun()?
 local StreamReader = {}
 
+-- The size of the buffer to read from the stream.
+-- This is TCP buffer size, not the size of the data to read.
+local TCP_RECV_BUFFER_SIZE = 1024
+
 --- Create a new StreamReader object.
 ---@param stream uv_stream_t The stream to read from.
 ---@param thread thread The coroutine to run the reader.
@@ -34,10 +38,13 @@ local Bytes = {
 
 ---@async
 ---Read a line from the stream asynchronously.
+---`max_size` is exceeded, the line is returned as is.
+---Reading is done in units of TCP_RECV_BUFFER_SIZE, so note that the length of the returned string may be up to max_size + TCP_RECV_BUFFER_SIZE.
+---@param max_size? integer The maximum size of the line to read.
 ---@return string? line, string? err_msg
-function StreamReader:readline_async()
+function StreamReader:readline_async(max_size)
   return self:_read_and_pop_async(function()
-    return self:_pop_line_from_buffer()
+    return self:_pop_line_from_buffer(max_size)
   end)
 end
 
@@ -55,11 +62,20 @@ end
 --- Pop a line from the buffer
 --- A line here refers to a string that ends with LF or CRLF.
 --- A single CR is not considered the end of a line.
+--- If the buffer does not contain a line, return nil.
+---@param max_size? integer The maximum size of the line to read.
 ---@return string? line
-function StreamReader:_pop_line_from_buffer()
+function StreamReader:_pop_line_from_buffer(max_size)
   -- find LF.
   local newline = self._buffer:find("\n")
   if not newline then
+    -- If the buffer is larger than the maximum size, return the buffer.
+    if max_size and #self._buffer > max_size then
+      local data = self._buffer
+      self._buffer = ""
+      return data
+    end
+    -- If the buffer does not contain a newline, return nil.
     return nil
   end
 
@@ -77,10 +93,11 @@ end
 
 ---@async
 ---Read a line, but skip empty line
+---@param max_size? integer The maximum size of the line to read.
 ---@return string? line ,string? err_msg
-function StreamReader:readline_skip_empty_async()
+function StreamReader:readline_skip_empty_async(max_size)
   while true do
-    local line, err_msg = self:readline_async()
+    local line, err_msg = self:readline_async(max_size)
     if not line then
       return nil, err_msg
     end
@@ -115,8 +132,15 @@ function StreamReader:_read_and_pop_async(read_fn)
     return buffered_data
   end
 
+  -- if the stream is already reading, return an error
+  if self._reading then
+    return nil, "stream is already reading."
+  end
+
+  -- Set the buffer size of the stream.
+  self._stream:recv_buffer_size(TCP_RECV_BUFFER_SIZE)
+
   -- otherwise, read from the stream
-  assert(not self._reading)
   local read_start_ok, read_start_err = self._stream:read_start(vim.schedule_wrap(function(err, data)
     if err then
       return coroutine.resume(self._thread, nil, err)

@@ -3,7 +3,10 @@ local status = require("prelive.core.http.status")
 local url = require("prelive.core.http.util.url")
 
 local VALID_HTTP_METHODS = { "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS" }
-local MAX_BODY_SIZE = 1024 * 1024 * 10 -- 10MB
+local MAX_BODY_SIZE = 1024 * 1024 * 10
+local MAX_REQUEST_LINE_SIZE = 1024 * 4
+local MAX_HEADER_FIELD_SIZE = 1024 * 4
+local MAX_HEADER_NUM = 100
 
 --- @class prelive.http.Request
 --- @field version string
@@ -48,9 +51,14 @@ end
 ---@param reader prelive.StreamReader
 ---@return {method:string,path:string,version:string, query:string, fragment:string }? request, integer? err_status, string? err_msg
 local function read_request_line_async(reader)
-  local line, err_msg = reader:readline_skip_empty_async()
+  local line, err_msg = reader:readline_skip_empty_async(MAX_REQUEST_LINE_SIZE)
   if not line then
     return nil, nil, err_msg
+  end
+
+  -- check request line length
+  if #line > MAX_REQUEST_LINE_SIZE then
+    return nil, status.URI_TOO_LONG, "Request-URI Too Long."
   end
 
   -- TODO: need to handle too long headers.
@@ -97,17 +105,23 @@ local function read_headers_async(reader)
     return nil, nil, "`read_request_async` must call in a coroutine"
   end
 
+  local header_count = 0
   local headers = HTTPHeaders:new({})
-  while true do
+  while header_count <= MAX_HEADER_NUM do
     -- reaad
-    local line, err_msg = reader:readline_async()
+    local line, err_msg = reader:readline_async(MAX_HEADER_FIELD_SIZE)
     if not line then
       return nil, nil, err_msg
     end
 
+    -- check header length
+    if #line > MAX_HEADER_FIELD_SIZE then
+      return nil, status.REQUEST_HEADER_FIELDS_TOO_LARGE, "Request Header Fields Too Large."
+    end
+
     -- header end
     if line == "" then
-      break
+      return headers
     end
 
     -- parse header
@@ -122,9 +136,12 @@ local function read_headers_async(reader)
     if key == "" then
       return nil, status.BAD_REQUEST, "Bad header syntax."
     end
+
+    header_count = header_count + 1
     headers:set(key, value)
   end
-  return headers
+
+  return nil, status.REQUEST_HEADER_FIELDS_TOO_LARGE, "Request Header Fields Too Large."
 end
 
 ---@async

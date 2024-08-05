@@ -646,16 +646,29 @@ describe("read_request_async", function()
 
     local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
     assert.are_nil(req, err_msg)
-    assert.are_equal(err_code, status.REQUEST_URI_TOO_LONG)
+    assert.are_equal(err_code, status.URI_TOO_LONG)
   end)
 
-  it("should reject if the request is too large", function()
+  it("should reject if the header size is too large", function()
     local long_line = string.rep("a", 8192)
     define_request({
       "GET / HTTP/1.0",
       "Host: " .. long_line,
       "",
     })
+
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    assert.are_nil(req, err_msg)
+    assert.are_equal(err_code, status.REQUEST_HEADER_FIELDS_TOO_LARGE)
+  end)
+
+  it("should reject if the header count is too large", function()
+    local payload = { "GET / HTTP/1.0" }
+    for _ = 1, 500 do
+      table.insert(payload, "Cookie: foo=bar")
+    end
+    table.insert(payload, "")
+    define_request(payload)
 
     local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
     assert.are_nil(req, err_msg)
