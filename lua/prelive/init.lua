@@ -65,7 +65,11 @@ function M.go(dir, file, go_opts)
   -- start the server.
   if not M._server then
     M._server = PreLiveServer:new(opts.server.host, opts.server.port)
-    M._server:start_serve()
+    if not M._server:start_serve() then
+      M._server:close()
+      M._server = nil
+      return
+    end
   end
   local top_page = M._server:add_directory(dir, go_opts.watch)
   if not top_page then

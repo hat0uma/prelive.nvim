@@ -82,11 +82,12 @@ function HTTPServer:new(addr, port, options)
 end
 
 --- Start listening and serving.
+---@return boolean success, string? err
 function HTTPServer:start_serve()
   local ok, err_name, err_msg = self._server:bind(self._addr, self._port)
   if not ok then
-    log.error("tcp bind failed. :%s:%s", err_name or "", err_msg or "")
-    return
+    local err = string.format("bind on `%s:%d` failed: %s", self._addr, self._port, err_msg)
+    return false, err
   end
 
   ok, err_name, err_msg = self._server:listen(self._options.tcp_max_backlog, function(err)
@@ -109,11 +110,12 @@ function HTTPServer:start_serve()
   end)
 
   if not ok then
-    log.error("tcp bind failed. :%s:%s", err_name, err_msg)
-    return
+    local err = string.format("listen on `%s:%d` failed: %s", self._addr, self._port, err_msg)
+    return false, err
   end
 
   log.info("Listening on %s:%d", self._addr, self._port)
+  return true
 end
 
 ---@async

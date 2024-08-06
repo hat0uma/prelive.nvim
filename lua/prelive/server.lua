@@ -62,10 +62,11 @@ function PreLiveServer:new(host, port)
 end
 
 --- Serve the server.
+---@return boolean success
 function PreLiveServer:start_serve()
   if self._instance then
     log.error("Server is already started.")
-    return nil
+    return false
   end
 
   -- Register an autocmd to close the server on VimLeavePre.
@@ -84,7 +85,11 @@ function PreLiveServer:start_serve()
   end)
 
   -- Serve the directory.
-  self._instance:start_serve()
+  local success, err = self._instance:start_serve()
+  if not success then
+    log.error("Failed to start the server: %s", err)
+  end
+  return success
 end
 
 --- Add a directory to serve.
@@ -101,7 +106,7 @@ function PreLiveServer:add_directory(dir, watch)
   -- Check if the directory is already being served.
   local directory_id = self:_get_directory_id(dir)
   if directory_id then
-    log.warn("Already serving %s", dir)
+    log.info("Already serving %s", dir)
     return self:_get_url(directory_id)
   end
 
