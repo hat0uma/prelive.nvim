@@ -52,7 +52,10 @@ end
 ---@param opts? prelive.Config
 ---@return prelive.Config
 function M.get(opts)
-  return vim.tbl_deep_extend("force", options or defaults, opts or {})
+  if not options then
+    M.setup()
+  end
+  return vim.tbl_deep_extend("force", options, opts or {})
 end
 
 return M
