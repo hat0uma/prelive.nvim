@@ -400,6 +400,12 @@ local default_loggger = M.new_logger({ {
 --- Set a logger to default
 ---@param logger prelive.log.Logger
 function M.set_default(logger)
+  -- close default logger
+  for _, iter in ipairs(default_loggger.handlers) do
+    iter.handler:close()
+  end
+
+  -- set new logger
   default_loggger = logger
 end
 
