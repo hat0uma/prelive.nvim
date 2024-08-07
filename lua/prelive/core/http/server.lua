@@ -1,4 +1,5 @@
 local StremReader = require("prelive.core.http.stream_reader")
+local config = require("prelive.core.http.config")
 local log = require("prelive.core.log")
 local middleware = require("prelive.core.http.middleware")
 local request = require("prelive.core.http.request")
@@ -7,16 +8,6 @@ local status = require("prelive.core.http.status")
 
 --- @alias prelive.http.RequestHandler async fun(req:prelive.http.Request,res:prelive.http.Response)
 --- @alias prelive.http.MiddlewareHandler async fun(req:prelive.http.Request,res:prelive.http.Response,donext:prelive.http.RequestHandler)
-
----@class prelive.http.ServerOptions
-local default_options = {
-  --- http keep-alive timeout in milliseconds.
-  keep_alive_timeout = 60 * 1000,
-
-  --- maximum number of pending connections.
-  --- If the number of pending connections is greater than this value, the client will receive ECONNREFUSED.
-  tcp_max_backlog = 16,
-}
 
 --- safe close libuv handles.
 ---@vararg uv_handle_t
@@ -64,9 +55,6 @@ function HTTPServer:new(addr, port, options)
   vim.validate("port", port, "number")
   vim.validate("options", options, "table", true)
 
-  -- merge options
-  options = vim.tbl_deep_extend("force", default_options, options or {})
-
   local obj = {}
   obj._addr = addr
   obj._port = port
@@ -75,7 +63,7 @@ function HTTPServer:new(addr, port, options)
   obj._server = vim.uv.new_tcp()
   obj._default_host = ("%s:%s"):format(addr, port)
   obj._connections = {}
-  obj._options = options
+  obj._options = config.get(options)
   setmetatable(obj, self)
   self.__index = self
   return obj

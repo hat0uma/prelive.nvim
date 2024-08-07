@@ -1,12 +1,13 @@
 local HTTPHeaders = require("prelive.core.http.headers")
+local config = require("prelive.core.http.config")
 local status = require("prelive.core.http.status")
 local url = require("prelive.core.http.util.url")
 
 local VALID_HTTP_METHODS = { "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS" }
-local MAX_BODY_SIZE = 1024 * 1024 * 10
-local MAX_REQUEST_LINE_SIZE = 1024 * 4
-local MAX_HEADER_FIELD_SIZE = 1024 * 4
-local MAX_HEADER_NUM = 100
+
+-- max chunk size string length limit for chunked body
+-- This is a limit on the length of the chunk size string, not the maximum size of the chunk data.
+local MAX_CHUNK_SIZE_HEXDIGIT = ("FFFFFFFF"):len() -- 32bit. see also `MAX_BODY_SIZE`
 
 --- @class prelive.http.Request
 --- @field version string
@@ -49,15 +50,16 @@ end
 ---@async
 ---Parse HTTP request line.
 ---@param reader prelive.StreamReader
+---@param opts prelive.http.ServerOptions
 ---@return {method:string,path:string,version:string, query:string, fragment:string }? request, integer? err_status, string? err_msg
-local function read_request_line_async(reader)
-  local line, err_msg = reader:readline_skip_empty_async(MAX_REQUEST_LINE_SIZE)
+local function read_request_line_async(reader, opts)
+  local line, err_msg = reader:readline_skip_empty_async(opts.max_request_line_size)
   if not line then
     return nil, nil, err_msg
   end
 
   -- check request line length
-  if #line > MAX_REQUEST_LINE_SIZE then
+  if #line > opts.max_request_line_size then
     return nil, status.URI_TOO_LONG, "Request-URI Too Long."
   end
 
@@ -97,8 +99,9 @@ end
 ---@async
 ---Read headers asynchronously
 ---@param reader prelive.StreamReader
+---@param opts prelive.http.ServerOptions
 ---@return prelive.http.Headers? headers, integer? err_status, string? err_msg
-local function read_headers_async(reader)
+local function read_headers_async(reader, opts)
   -- check if the function is called within a coroutine
   local thread = coroutine.running()
   if not thread then
@@ -107,15 +110,15 @@ local function read_headers_async(reader)
 
   local header_count = 0
   local headers = HTTPHeaders:new({})
-  while header_count <= MAX_HEADER_NUM do
+  while header_count <= opts.max_header_num do
     -- reaad
-    local line, err_msg = reader:readline_async(MAX_HEADER_FIELD_SIZE)
+    local line, err_msg = reader:readline_async(opts.max_header_field_size)
     if not line then
       return nil, nil, err_msg
     end
 
     -- check header length
-    if #line > MAX_HEADER_FIELD_SIZE then
+    if #line > opts.max_header_field_size then
       return nil, status.REQUEST_HEADER_FIELDS_TOO_LARGE, "Request Header Fields Too Large."
     end
 
@@ -147,8 +150,9 @@ end
 ---@async
 ---Read chunked body
 ---@param reader prelive.StreamReader
+---@param opts prelive.http.ServerOptions
 ---@return string? data ,integer? err_status, string? err_msg
-local function read_chunked_body(reader)
+local function read_chunked_body(reader, opts)
   -- RFC 9112 4.1. Chunked Transfer Coding
   -- chunked-body = *chunk
   --                last-chunk
@@ -175,19 +179,32 @@ local function read_chunked_body(reader)
   -- \r\n
 
   -- read chunks
+  local total_size = 0
   local body = {}
   while true do
-    local line, err_msg = reader:readline_async()
+    local max = opts.max_chunk_ext_size + MAX_CHUNK_SIZE_HEXDIGIT + 2
+    local line, err_msg = reader:readline_async(max)
     if not line then
       return nil, nil, err_msg
     end
 
+    -- check max line length
+    if #line > max then
+      return nil, status.BAD_REQUEST, "Chunk size or chunk-ext is too long."
+    end
+
     -- chunk-size and chunk-ext
-    local chunk_head = vim.split(line, ";")
     -- TODO: currently skipping chunk-ext
+    local chunk_head = vim.split(line, ";")
     local chunk_size = tonumber(chunk_head[1], 16)
     if not chunk_size or chunk_size < 0 then
       return nil, status.BAD_REQUEST, "invalid chunk size format"
+    end
+
+    -- check body size
+    total_size = total_size + chunk_size ---@type integer
+    if total_size > opts.max_body_size then
+      return nil, status.PAYLOAD_TOO_LARGE, string.format("Request must be less than %d bytes.", opts.max_body_size)
     end
 
     -- chunk end
@@ -228,8 +245,9 @@ end
 ---Read body with specified size
 ---@param reader prelive.StreamReader
 ---@param content_length string
+---@param opts prelive.http.ServerOptions
 ---@return string? data ,integer? err_status, string? err_msg
-local function read_sized_body(reader, content_length)
+local function read_sized_body(reader, content_length, opts)
   -- check content-length
   if content_length:match("^%d+$") == nil then
     return nil, status.BAD_REQUEST, "Invalid Content-Length."
@@ -242,8 +260,8 @@ local function read_sized_body(reader, content_length)
   end
 
   -- check body size
-  if size >= MAX_BODY_SIZE then
-    return nil, status.PAYLOAD_TOO_LARGE, string.format("Request must be less than %d bytes.", MAX_BODY_SIZE)
+  if size >= opts.max_body_size then
+    return nil, status.PAYLOAD_TOO_LARGE, string.format("Request must be less than %d bytes.", opts.max_body_size)
   end
 
   -- read body
@@ -260,8 +278,9 @@ end
 ---@param reader prelive.StreamReader
 ---@param headers prelive.http.Headers
 ---@param method string
+---@param opts prelive.http.ServerOptions
 ---@return string? data ,integer? err_status, string? err_msg
-local function read_body(reader, headers, method)
+local function read_body(reader, headers, method, opts)
   local content_length = headers:get("Content-Length")
   local transfer_encoding = headers:get("Transfer-Encoding")
   content_length = content_length ~= "" and content_length or nil
@@ -282,7 +301,7 @@ local function read_body(reader, headers, method)
   if content_length then
     -- content-length body
     local data
-    data, err_status, err_msg = read_sized_body(reader, content_length)
+    data, err_status, err_msg = read_sized_body(reader, content_length, opts)
     if not data then
       return nil, err_status, err_msg
     end
@@ -290,7 +309,7 @@ local function read_body(reader, headers, method)
   elseif transfer_encoding and vim.stricmp(transfer_encoding, "chunked") == 0 then
     -- chunked body
     local data
-    data, err_status, err_msg = read_chunked_body(reader)
+    data, err_status, err_msg = read_chunked_body(reader, opts)
     if not data then
       return nil, err_status, err_msg
     end
@@ -307,9 +326,18 @@ end
 ---@param reader prelive.StreamReader
 ---@param client_ip string
 ---@param default_host string?
+---@param opts prelive.http.ServerOptions?
 ---@return prelive.http.Request? request, integer? err_status, string? err_msg
-local function read_request_async(reader, client_ip, default_host)
-  vim.validate({ reader = { reader, "table" } })
+local function read_request_async(reader, client_ip, default_host, opts)
+  vim.validate({
+    reader = { reader, "table" },
+    client_ip = { client_ip, "string" },
+    default_host = { default_host, "string", true },
+    opts = { opts, "table", true },
+  })
+
+  -- get default options
+  opts = config.get(opts)
 
   -- check if the function is called within a coroutine
   local thread = coroutine.running()
@@ -323,14 +351,14 @@ local function read_request_async(reader, client_ip, default_host)
   -- read request line
   -- TODO: max-length
   local request_line
-  request_line, err_status, err_msg = read_request_line_async(reader)
+  request_line, err_status, err_msg = read_request_line_async(reader, opts)
   if not request_line then
     return nil, err_status, err_msg
   end
 
   -- read headers
   local headers
-  headers, err_status, err_msg = read_headers_async(reader)
+  headers, err_status, err_msg = read_headers_async(reader, opts)
   if not headers then
     return nil, err_status, err_msg
   end
@@ -350,7 +378,7 @@ local function read_request_async(reader, client_ip, default_host)
 
   -- read body
   local body
-  body, err_status, err_msg = read_body(reader, headers, request_line.method)
+  body, err_status, err_msg = read_body(reader, headers, request_line.method, opts)
   if not body then
     return nil, err_status, err_msg
   end

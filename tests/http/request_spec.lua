@@ -1,8 +1,10 @@
 ---@diagnostic disable: await-in-sync
 local StreamReader = require("prelive.core.http.stream_reader")
+local config = require("prelive.core.http.config")
 local request = require("prelive.core.http.request")
 local status = require("prelive.core.http.status")
 
+local DEFAULT_HOST = "example.com"
 local CLIENT_IP = "1.1.1.1"
 
 describe("read_request_async", function()
@@ -77,14 +79,14 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, "2.2.2.2")
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/hello")
     assert.are_equal(req.version, "HTTP/1.0")
     assert.are_equal(req.body, "")
     assert.are_equal(req.headers:get("Content-Type"), "text/plain")
-    assert.are_equal(req.headers:get("Host"), "2.2.2.2")
+    assert.are_equal(req.headers:get("Host"), DEFAULT_HOST)
     assert.are_equal(req.fragment, "")
     assert.are_equal(req.protocol, "http")
     assert.are_equal(req.client_ip, CLIENT_IP)
@@ -97,7 +99,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, "2.2.2.2")
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, 400)
   end)
@@ -109,7 +111,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, "2.2.2.2")
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, 400)
   end)
@@ -121,7 +123,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, "2.2.2.2")
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.HTTP_VERSION_NOT_SUPPORTED)
 
@@ -130,7 +132,7 @@ describe("read_request_async", function()
       "Content-Type: text/plain",
       "",
     })
-    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, "2.2.2.2")
+    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.HTTP_VERSION_NOT_SUPPORTED)
   end)
@@ -429,9 +431,10 @@ describe("read_request_async", function()
   end)
 
   it("should reject if the Content-Length is too large", function()
+    local opts = config.get()
     define_request({
       "POST / HTTP/1.0",
-      "Content-Length: " .. 2 ^ 31,
+      "Content-Length: " .. opts.max_body_size + 1,
       "",
       "Hello, World!",
     })
@@ -634,11 +637,52 @@ describe("read_request_async", function()
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
 
+  it("should reject if the chunk size is too large", function()
+    local opts = config.get()
+    define_request({
+      "GET / HTTP/1.0",
+      "Transfer-Encoding: chunked",
+      "",
+      string.format("%x", opts.max_body_size + 1),
+      "Mozilla",
+      "11",
+      "Developer Network",
+      "0",
+      "",
+    })
+
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    assert.are_nil(req, err_msg)
+    assert.are_equal(err_code, status.PAYLOAD_TOO_LARGE)
+  end)
+
+  it("should reject if the total body size is too large", function()
+    local opts = config.get({ max_body_size = 1000 })
+    local payload = { "GET / HTTP/1.0", "Transfer-Encoding: chunked", "" }
+    local total_size = 0
+    while total_size < opts.max_body_size do
+      local size = math.min(opts.max_body_size - total_size, 10)
+      table.insert(payload, string.format("%x", size))
+      table.insert(payload, string.rep("M", size))
+      total_size = total_size + size
+    end
+    table.insert(payload, "1")
+    table.insert(payload, "M")
+    table.insert(payload, "0")
+    table.insert(payload, "")
+    define_request(payload)
+
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST, opts)
+    assert.are_nil(req, err_msg)
+    assert.are_equal(err_code, status.PAYLOAD_TOO_LARGE)
+  end)
+
   ----------------------------------------------
   -- Mallicious request
   ----------------------------------------------
   it("should reject if the request is too long", function()
-    local long_line = string.rep("a", 8192)
+    local opts = config.get()
+    local long_line = string.rep("a", opts.max_request_line_size - ("GET / HTTP/1.0"):len() + 1)
     define_request({
       "GET /" .. long_line .. " HTTP/1.0",
       "",
@@ -650,7 +694,8 @@ describe("read_request_async", function()
   end)
 
   it("should reject if the header size is too large", function()
-    local long_line = string.rep("a", 8192)
+    local opts = config.get()
+    local long_line = string.rep("a", opts.max_header_field_size - ("Host: "):len() + 1)
     define_request({
       "GET / HTTP/1.0",
       "Host: " .. long_line,
@@ -663,8 +708,9 @@ describe("read_request_async", function()
   end)
 
   it("should reject if the header count is too large", function()
+    local opts = config.get()
     local payload = { "GET / HTTP/1.0" }
-    for _ = 1, 500 do
+    for _ = 1, opts.max_header_num + 1 do
       table.insert(payload, "Cookie: foo=bar")
     end
     table.insert(payload, "")
