@@ -2,6 +2,7 @@ local PreLiveServer = require("prelive.server")
 local config = require("prelive.config")
 local log = require("prelive.core.log")
 local mime = require("prelive.core.http.util.mime")
+local util = require("prelive.util")
 local webbrowser = require("prelive.core.webbrowser")
 
 local M = {
@@ -46,6 +47,10 @@ function M.go(dir, file, go_opts)
   end
 
   if file and file ~= "" then
+    if not util.is_absolute_path(file) then
+      file = vim.fs.joinpath(dir, file)
+    end
+
     -- check file exists.
     result, err = vim.uv.fs_realpath(vim.fs.normalize(file))
     if not result then
