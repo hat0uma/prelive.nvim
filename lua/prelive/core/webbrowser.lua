@@ -34,7 +34,7 @@ local function get_sysname()
   end
 
   if uname.sysname == "Linux" then
-    if uname.version:lower():find("microsoft") then
+    if uname.release:lower():find("microsoft") then
       return "wsl"
     else
       return "unix"
