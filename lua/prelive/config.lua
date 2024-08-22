@@ -14,8 +14,7 @@ local defaults = {
     port = 2255,
   },
   log = {
-    --- The log levels to print.
-    --- The log levels are defined in `vim.log.levels`. see `vim.log.levels`.
+    --- The log levels to print. see `vim.log.levels`.
     print_level = vim.log.levels.WARN,
     --- The log levels to write to the log file. see `vim.log.levels`.
     file_level = vim.log.levels.DEBUG,
