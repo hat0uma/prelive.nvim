@@ -127,6 +127,7 @@ function HTTPServer:_handle_connection_async()
 
   -- create reader
   -- restart connection timer when reader receives data.
+  client:recv_buffer_size(self._options.tcp_recv_buffer_size)
   local reader = StremReader:new(client, coroutine.running())
   reader.on_receive = function()
     connection_timer:stop()

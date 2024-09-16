@@ -6,10 +6,6 @@
 ---@field on_receive fun()?
 local StreamReader = {}
 
--- The size of the buffer to read from the stream.
--- This is TCP buffer size, not the size of the data to read.
-local TCP_RECV_BUFFER_SIZE = 1024
-
 --- Create a new StreamReader object.
 ---@param stream uv_stream_t The stream to read from.
 ---@param thread thread The coroutine to run the reader.
@@ -39,7 +35,7 @@ local Bytes = {
 ---@async
 ---Read a line from the stream asynchronously.
 ---`max_size` is exceeded, the line is returned as is.
----Reading is done in units of TCP_RECV_BUFFER_SIZE, so note that the length of the returned string may be up to max_size + TCP_RECV_BUFFER_SIZE.
+---Reading is done in units of `vim.uv.recv_buffer_size()`, so note that the length of the returned string may be up to max_size + `vim.uv.recv_buffer_size()`.
 ---@param max_size? integer The maximum size of the line to read.
 ---@return string? line, string? err_msg
 function StreamReader:readline_async(max_size)
@@ -136,9 +132,6 @@ function StreamReader:_read_and_pop_async(read_fn)
   if self._reading then
     return nil, "stream is already reading."
   end
-
-  -- Set the buffer size of the stream.
-  self._stream:recv_buffer_size(TCP_RECV_BUFFER_SIZE)
 
   -- otherwise, read from the stream
   local read_start_ok, read_start_err = self._stream:read_start(vim.schedule_wrap(function(err, data)

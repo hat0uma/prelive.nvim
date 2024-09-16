@@ -7,6 +7,12 @@ local options = {
   --- @type integer
   tcp_max_backlog = 16,
 
+  --- tcp recv buffer size.
+  --- The size of the buffer used to receive data from the client.
+  --- This value is used for `vim.uv.recv_buffer_size()`.
+  --- @type integer
+  tcp_recv_buffer_size = 1024,
+
   --- http keep-alive timeout in milliseconds.
   --- If the client does not send a new request within this time, the server will close the connection.
   --- @type integer
