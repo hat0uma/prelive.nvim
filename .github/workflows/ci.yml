@@ -26,7 +26,7 @@ jobs:
       - uses: NTBBloodbath/selene-action@v1.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --display-style=quiet ./lua
+          args: --color always ./lua ./tests ./plugin
 
   tests:
     name: Run tests
