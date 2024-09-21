@@ -90,9 +90,9 @@ function HTTPServer:start_serve()
       self:_handle_connection_async()
     end)
 
-    local ok
-    ok, err = coroutine.resume(thread)
-    if not ok then
+    local co_ok
+    co_ok, err = coroutine.resume(thread)
+    if not co_ok then
       log.error("failed to start connection coroutine: %s", err or "")
     end
   end)
