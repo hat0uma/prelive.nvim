@@ -1,5 +1,4 @@
 local HTTPHeaders = require("prelive.core.http.headers")
-local config = require("prelive.core.http.config")
 local status = require("prelive.core.http.status")
 local url = require("prelive.core.http.util.url")
 
@@ -50,7 +49,7 @@ end
 ---@async
 ---Parse HTTP request line.
 ---@param reader prelive.StreamReader
----@param opts prelive.http.ServerOptions
+---@param opts prelive.Config.Http
 ---@return {method:string,path:string,version:string, query:string, fragment:string }? request, integer? err_status, string? err_msg
 local function read_request_line_async(reader, opts)
   local line, err_msg = reader:readline_skip_empty_async(opts.max_request_line_size)
@@ -99,7 +98,7 @@ end
 ---@async
 ---Read headers asynchronously
 ---@param reader prelive.StreamReader
----@param opts prelive.http.ServerOptions
+---@param opts prelive.Config.Http
 ---@return prelive.http.Headers? headers, integer? err_status, string? err_msg
 local function read_headers_async(reader, opts)
   -- check if the function is called within a coroutine
@@ -150,7 +149,7 @@ end
 ---@async
 ---Read chunked body
 ---@param reader prelive.StreamReader
----@param opts prelive.http.ServerOptions
+---@param opts prelive.Config.Http
 ---@return string? data ,integer? err_status, string? err_msg
 local function read_chunked_body(reader, opts)
   -- RFC 9112 4.1. Chunked Transfer Coding
@@ -245,7 +244,7 @@ end
 ---Read body with specified size
 ---@param reader prelive.StreamReader
 ---@param content_length string
----@param opts prelive.http.ServerOptions
+---@param opts prelive.Config.Http
 ---@return string? data ,integer? err_status, string? err_msg
 local function read_sized_body(reader, content_length, opts)
   -- check content-length
@@ -278,7 +277,7 @@ end
 ---@param reader prelive.StreamReader
 ---@param headers prelive.http.Headers
 ---@param method string
----@param opts prelive.http.ServerOptions
+---@param opts prelive.Config.Http
 ---@return string? data ,integer? err_status, string? err_msg
 local function read_body(reader, headers, method, opts)
   local content_length = headers:get("Content-Length")
@@ -325,19 +324,16 @@ end
 ---Read request asynchronously
 ---@param reader prelive.StreamReader
 ---@param client_ip string
+---@param opts prelive.Config.Http
 ---@param default_host string?
----@param opts prelive.http.ServerOptions?
 ---@return prelive.http.Request? request, integer? err_status, string? err_msg
-local function read_request_async(reader, client_ip, default_host, opts)
+local function read_request_async(reader, client_ip, opts, default_host)
   vim.validate({
     reader = { reader, "table" },
     client_ip = { client_ip, "string" },
     default_host = { default_host, "string", true },
     opts = { opts, "table", true },
   })
-
-  -- get default options
-  opts = config.get(opts)
 
   -- check if the function is called within a coroutine
   local thread = coroutine.running()

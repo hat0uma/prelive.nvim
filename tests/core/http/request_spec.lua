@@ -1,6 +1,5 @@
 ---@diagnostic disable: await-in-sync
 local StreamReader = require("prelive.core.http.stream_reader")
-local config = require("prelive.core.http.config")
 local request = require("prelive.core.http.request")
 local status = require("prelive.core.http.status")
 
@@ -27,6 +26,8 @@ describe("read_request_async", function()
     reader._buffer = msg
   end
 
+  local http_opts = require("prelive.config").defaults.http
+
   ---------------------------------------------
   -- versions and protocols
   ---------------------------------------------
@@ -38,7 +39,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/hello")
@@ -59,7 +60,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/hello")
@@ -79,7 +80,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts, DEFAULT_HOST)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/hello")
@@ -99,7 +100,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts, DEFAULT_HOST)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, 400)
   end)
@@ -111,7 +112,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts, DEFAULT_HOST)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, 400)
   end)
@@ -123,7 +124,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts, DEFAULT_HOST)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.HTTP_VERSION_NOT_SUPPORTED)
 
@@ -132,7 +133,7 @@ describe("read_request_async", function()
       "Content-Type: text/plain",
       "",
     })
-    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST)
+    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts, DEFAULT_HOST)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.HTTP_VERSION_NOT_SUPPORTED)
   end)
@@ -145,7 +146,7 @@ describe("read_request_async", function()
       "GET / HTTP/1.0",
       "",
     })
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
 
@@ -154,7 +155,7 @@ describe("read_request_async", function()
       "Content-Length: 0",
       "",
     })
-    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "POST")
 
@@ -163,7 +164,7 @@ describe("read_request_async", function()
       "Content-Length: 0",
       "",
     })
-    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "PUT")
 
@@ -172,7 +173,7 @@ describe("read_request_async", function()
       "Content-Length: 0",
       "",
     })
-    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "DELETE")
 
@@ -181,7 +182,7 @@ describe("read_request_async", function()
       "Content-Length: 0",
       "",
     })
-    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "OPTIONS")
 
@@ -189,7 +190,7 @@ describe("read_request_async", function()
       "HEAD / HTTP/1.0",
       "",
     })
-    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "HEAD")
 
@@ -206,7 +207,7 @@ describe("read_request_async", function()
       "GET1 / HTTP/1.0",
       "",
     })
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
 
@@ -215,7 +216,7 @@ describe("read_request_async", function()
       " / HTTP/1.0",
       "",
     })
-    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -228,7 +229,7 @@ describe("read_request_async", function()
       "GET HTTP/1.0",
       "",
     })
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -244,7 +245,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/hello")
@@ -264,7 +265,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/hello")
@@ -278,7 +279,7 @@ describe("read_request_async", function()
       "GET /hello?foo=bar&abc#baz HTTP/1.0",
       "",
     })
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/hello")
@@ -298,7 +299,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -310,7 +311,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -326,7 +327,7 @@ describe("read_request_async", function()
       "Hello, World!",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "POST")
     assert.are_equal(req.path, "/")
@@ -343,7 +344,7 @@ describe("read_request_async", function()
       "Hello, World!",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "POST")
     assert.are_equal(req.path, "/")
@@ -360,7 +361,7 @@ describe("read_request_async", function()
       "Hello, World!",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.LENGTH_REQUIRED)
   end)
@@ -374,7 +375,7 @@ describe("read_request_async", function()
       "Hello, World!",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.body, "Hello, World")
   end)
@@ -387,7 +388,7 @@ describe("read_request_async", function()
       "Hello, World!",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -400,7 +401,7 @@ describe("read_request_async", function()
       "Hello, World!",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -413,7 +414,7 @@ describe("read_request_async", function()
       "Hello, World!",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -425,21 +426,20 @@ describe("read_request_async", function()
       "Hello, World!",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.LENGTH_REQUIRED)
   end)
 
   it("should reject if the Content-Length is too large", function()
-    local opts = config.get()
     define_request({
       "POST / HTTP/1.0",
-      "Content-Length: " .. opts.max_body_size + 1,
+      "Content-Length: " .. http_opts.max_body_size + 1,
       "",
       "Hello, World!",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.PAYLOAD_TOO_LARGE)
   end)
@@ -462,7 +462,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/")
@@ -491,7 +491,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/")
@@ -520,7 +520,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/")
@@ -545,7 +545,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -563,7 +563,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -581,7 +581,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -598,7 +598,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -616,7 +616,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
 
@@ -632,18 +632,17 @@ describe("read_request_async", function()
       "",
     })
 
-    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
 
   it("should reject if the chunk size is too large", function()
-    local opts = config.get()
     define_request({
       "GET / HTTP/1.0",
       "Transfer-Encoding: chunked",
       "",
-      string.format("%x", opts.max_body_size + 1),
+      string.format("%x", http_opts.max_body_size + 1),
       "Mozilla",
       "11",
       "Developer Network",
@@ -651,13 +650,13 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.PAYLOAD_TOO_LARGE)
   end)
 
   it("should reject if the total body size is too large", function()
-    local opts = config.get({ max_body_size = 1000 })
+    local opts = vim.tbl_extend("force", http_opts, { max_body_size = 1000 })
     local payload = { "GET / HTTP/1.0", "Transfer-Encoding: chunked", "" }
     local total_size = 0
     while total_size < opts.max_body_size do
@@ -672,7 +671,7 @@ describe("read_request_async", function()
     table.insert(payload, "")
     define_request(payload)
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, DEFAULT_HOST, opts)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, opts, DEFAULT_HOST)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.PAYLOAD_TOO_LARGE)
   end)
@@ -681,42 +680,39 @@ describe("read_request_async", function()
   -- Mallicious request
   ----------------------------------------------
   it("should reject if the request is too long", function()
-    local opts = config.get()
-    local long_line = string.rep("a", opts.max_request_line_size - ("GET / HTTP/1.0"):len() + 1)
+    local long_line = string.rep("a", http_opts.max_request_line_size - ("GET / HTTP/1.0"):len() + 1)
     define_request({
       "GET /" .. long_line .. " HTTP/1.0",
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.URI_TOO_LONG)
   end)
 
   it("should reject if the header size is too large", function()
-    local opts = config.get()
-    local long_line = string.rep("a", opts.max_header_field_size - ("Host: "):len() + 1)
+    local long_line = string.rep("a", http_opts.max_header_field_size - ("Host: "):len() + 1)
     define_request({
       "GET / HTTP/1.0",
       "Host: " .. long_line,
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.REQUEST_HEADER_FIELDS_TOO_LARGE)
   end)
 
   it("should reject if the header count is too large", function()
-    local opts = config.get()
     local payload = { "GET / HTTP/1.0" }
-    for _ = 1, opts.max_header_num + 1 do
+    for _ = 1, http_opts.max_header_num + 1 do
       table.insert(payload, "Cookie: foo=bar")
     end
     table.insert(payload, "")
     define_request(payload)
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.REQUEST_HEADER_FIELDS_TOO_LARGE)
   end)
@@ -734,7 +730,7 @@ describe("read_request_async", function()
       "Host: example.com",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert.are_nil(req, err_msg)
     assert.are_equal(err_code, status.BAD_REQUEST)
   end)
@@ -745,7 +741,7 @@ describe("read_request_async", function()
       "",
     })
 
-    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP)
+    local req, err_code, err_msg = request.read_request_async(reader, CLIENT_IP, http_opts)
     assert(req, err_msg)
     assert.are_equal(req.method, "GET")
     assert.are_equal(req.path, "/hello\n")

@@ -1,5 +1,4 @@
 local StremReader = require("prelive.core.http.stream_reader")
-local config = require("prelive.core.http.config")
 local log = require("prelive.core.log")
 local middleware = require("prelive.core.http.middleware")
 local request = require("prelive.core.http.request")
@@ -26,7 +25,7 @@ end
 ---@field _middlewares prelive.http.Server.Middleware[]
 ---@field _server uv_tcp_t
 ---@field _default_host string
----@field _options prelive.http.ServerOptions
+---@field _options prelive.Config.Http
 ---@field _connections { socket: uv_tcp_t , reader: prelive.StreamReader }[]
 local HTTPServer = {}
 
@@ -48,7 +47,7 @@ local HTTPServer = {}
 ---
 ---@param addr string the address to listen on.
 ---@param port integer the port to listen on.
----@param options? prelive.http.ServerOptions the options.
+---@param options prelive.Config.Http the options.
 ---@return prelive.http.Server
 function HTTPServer:new(addr, port, options)
   vim.validate("addr", addr, "string")
@@ -63,7 +62,7 @@ function HTTPServer:new(addr, port, options)
   obj._server = vim.uv.new_tcp()
   obj._default_host = ("%s:%s"):format(addr, port)
   obj._connections = {}
-  obj._options = config.get(options)
+  obj._options = options
   setmetatable(obj, self)
   self.__index = self
   return obj
@@ -141,7 +140,7 @@ function HTTPServer:_handle_connection_async()
   while true do
     -- read request
     local res = response:new(client)
-    local req, err_status, err_msg = request.read_request_async(reader, client_ip, self._default_host)
+    local req, err_status, err_msg = request.read_request_async(reader, client_ip, self._options, self._default_host)
     if not req then
       if not client:is_closing() then
         res:write(err_msg or "", nil, err_status or status.BAD_REQUEST)

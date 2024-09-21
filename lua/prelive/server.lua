@@ -41,13 +41,15 @@ local INJECT_JS_TEMPLATE = [[
 ---@field _host string
 ---@field _port integer
 ---@field _cleanup_autocmd integer?
+---@field _options prelive.Config.Http
 local PreLiveServer = {}
 
 --- Create a new prelive.PreLiveServer.
 ---@param host string The address to bind.
 ---@param port integer The port to serve.
+---@param opts prelive.Config.Http
 ---@return prelive.PreLiveServer
-function PreLiveServer:new(host, port)
+function PreLiveServer:new(host, port, opts)
   local obj = {}
   obj._dirs = {}
   obj._next_id = 1
@@ -55,6 +57,7 @@ function PreLiveServer:new(host, port)
   obj._host = host
   obj._port = port
   obj._cleanup_autocmd = nil ---@type integer | nil
+  obj._options = opts
 
   setmetatable(obj, self)
   self.__index = self
@@ -78,7 +81,7 @@ function PreLiveServer:start_serve()
   })
 
   -- Create a new server instance. and serve the update endpoint.
-  self._instance = http.Server:new(self._host, self._port)
+  self._instance = http.Server:new(self._host, self._port, self._options)
   self._instance:use_logger()
   self._instance:get("/update/", function(req, res) --- @async
     self:_handle_update(req, res)

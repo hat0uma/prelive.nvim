@@ -69,7 +69,7 @@ function M.go(dir, file, go_opts)
 
   -- start the server.
   if not M._server then
-    M._server = PreLiveServer:new(opts.server.host, opts.server.port)
+    M._server = PreLiveServer:new(opts.server.host, opts.server.port, opts.http)
     if not M._server:start_serve() then
       M._server:close()
       M._server = nil
