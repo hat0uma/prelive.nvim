@@ -331,8 +331,8 @@ local function read_request_async(reader, client_ip, opts, default_host)
   vim.validate({
     reader = { reader, "table" },
     client_ip = { client_ip, "string" },
+    opts = { opts, "table" },
     default_host = { default_host, "string", true },
-    opts = { opts, "table", true },
   })
 
   -- check if the function is called within a coroutine

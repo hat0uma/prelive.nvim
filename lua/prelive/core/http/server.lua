@@ -50,9 +50,11 @@ local HTTPServer = {}
 ---@param options prelive.Config.Http the options.
 ---@return prelive.http.Server
 function HTTPServer:new(addr, port, options)
-  vim.validate("addr", addr, "string")
-  vim.validate("port", port, "number")
-  vim.validate("options", options, "table", true)
+  vim.validate({
+    addr = { addr, "string" },
+    port = { port, "number" },
+    options = { options, "table" },
+  })
 
   local obj = {}
   obj._addr = addr
