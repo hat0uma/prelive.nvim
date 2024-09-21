@@ -20,6 +20,7 @@ jobs:
       - uses: kdheepak/panvimdoc@main
         with:
           vimdoc: prelive
+          version: "Neovim >= 0.10.1"
           treesitter: true
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
