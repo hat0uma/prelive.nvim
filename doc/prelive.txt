@@ -1,4 +1,4 @@
-*prelive.txt*          For NVIM v0.8.0          Last change: 2024 September 21
+*prelive.txt*        For Neovim >= 0.10.1       Last change: 2024 September 21
 
 ==============================================================================
 Table of Contents                                  *prelive-table-of-contents*
@@ -20,8 +20,6 @@ Table of Contents                                  *prelive-table-of-contents*
 `prelive.nvim` is a simple luv-based development server with live reloading for
 Neovim.
 
-**This plugin is currently a work in progress (WIP) and the API may change.**
-
 
 FEATURES                                       *prelive-prelive.nvim-features*
 
@@ -36,7 +34,7 @@ FEATURES                                       *prelive-prelive.nvim-features*
 
 REQUIREMENTS                               *prelive-prelive.nvim-requirements*
 
-- Neovim Nightly
+- Neovim v0.10.1 or later
 
 
 INSTALLATION                               *prelive-prelive.nvim-installation*
