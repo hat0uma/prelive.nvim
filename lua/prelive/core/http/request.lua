@@ -297,7 +297,7 @@ local function read_body(reader, headers, method, opts)
   local err_msg = nil
   local err_status = nil
 
-  local body = ""
+  local body --- @type string
   if content_length then
     -- content-length body
     local data
@@ -315,7 +315,7 @@ local function read_body(reader, headers, method, opts)
     end
     body = data
   else
-    -- no body
+    body = ""
   end
 
   return body
