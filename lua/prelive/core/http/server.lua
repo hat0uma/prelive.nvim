@@ -85,10 +85,13 @@ function HTTPServer:start_serve()
       return
     end
 
-    ---@async
     -- start connection coroutine
     local thread = coroutine.create(function()
-      self:_handle_connection_async()
+      xpcall(function() ---@async
+        self:_handle_connection_async()
+      end, function(coerr)
+        log.error("Error occured in connection coroutine: %s", coerr)
+      end)
     end)
 
     local co_ok
@@ -118,7 +121,6 @@ function HTTPServer:_handle_connection_async()
 
   -- create connection timer and start it.
   -- close connection if no data is received within the timeout.
-  -- TODO: writing big data
   local connection_timer = vim.uv.new_timer()
   local on_connection_timeout = function()
     log.trace("%p close connection with timeout", client)
