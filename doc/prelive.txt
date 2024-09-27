@@ -1,17 +1,15 @@
-*prelive.txt*        For Neovim >= 0.10.1       Last change: 2024 September 21
+*prelive.txt*        For Neovim >= 0.10.1       Last change: 2024 September 27
 
 ==============================================================================
 Table of Contents                                  *prelive-table-of-contents*
 
 1. prelive.nvim                                         |prelive-prelive.nvim|
-  - Features                                   |prelive-prelive.nvim-features|
-  - Requirements                           |prelive-prelive.nvim-requirements|
-  - Installation                           |prelive-prelive.nvim-installation|
-  - Configuration                         |prelive-prelive.nvim-configuration|
-  - Usage                                         |prelive-prelive.nvim-usage|
-  - Lua API                                     |prelive-prelive.nvim-lua-api|
-  - License                                     |prelive-prelive.nvim-license|
-  - Contributing                           |prelive-prelive.nvim-contributing|
+  - ✨ Features                           |prelive-prelive.nvim-✨-features|
+  - ⚡ Requirements                   |prelive-prelive.nvim-⚡-requirements|
+  - 📦 Installation                 |prelive-prelive.nvim-📦-installation|
+  - 🛠️ Configuration         |prelive-prelive.nvim-🛠️-configuration|
+  - 🚀 Usage                               |prelive-prelive.nvim-🚀-usage|
+  - 🤝 Contributing                 |prelive-prelive.nvim-🤝-contributing|
 2. Links                                                       |prelive-links|
 
 ==============================================================================
@@ -21,7 +19,7 @@ Table of Contents                                  *prelive-table-of-contents*
 Neovim.
 
 
-FEATURES                                       *prelive-prelive.nvim-features*
+✨ FEATURES                               *prelive-prelive.nvim-✨-features*
 
 - Provides a file server with automatic reloading functionality, ensuring your changes are immediately reflected in the browser.
 - Implemented in Lua using `vim.uv`, eliminating the need for Node.js or other external tools.
@@ -32,12 +30,12 @@ FEATURES                                       *prelive-prelive.nvim-features*
   [!IMPORTANT] For security reasons, it is recommended to use this plugin only in
   a trusted environment.
 
-REQUIREMENTS                               *prelive-prelive.nvim-requirements*
+⚡ REQUIREMENTS                       *prelive-prelive.nvim-⚡-requirements*
 
 - Neovim v0.10.1 or later
 
 
-INSTALLATION                               *prelive-prelive.nvim-installation*
+📦 INSTALLATION                     *prelive-prelive.nvim-📦-installation*
 
 Install the plugin using your favorite package manager:
 
@@ -65,7 +63,7 @@ vim-plug:
 <
 
 
-CONFIGURATION                             *prelive-prelive.nvim-configuration*
+🛠️ CONFIGURATION             *prelive-prelive.nvim-🛠️-configuration*
 
 The `setup` function accepts a table with the following options:
 
@@ -143,7 +141,7 @@ The `setup` function accepts a table with the following options:
 <
 
 
-USAGE                                             *prelive-prelive.nvim-usage*
+🚀 USAGE                                   *prelive-prelive.nvim-🚀-usage*
 
 
 COMMANDS ~
@@ -177,7 +175,7 @@ Serve a specific file and open it in the browser:
 <
 
 
-LUA API                                         *prelive-prelive.nvim-lua-api*
+LUA API ~
 
 The following functions are available for use in Lua:
 
@@ -206,12 +204,7 @@ The following functions are available for use in Lua:
 <
 
 
-LICENSE                                         *prelive-prelive.nvim-license*
-
-This plugin is licensed under the MIT License.
-
-
-CONTRIBUTING                               *prelive-prelive.nvim-contributing*
+🤝 CONTRIBUTING                     *prelive-prelive.nvim-🤝-contributing*
 
 Contributions are welcome! Please open an issue or submit a pull request on
 GitHub.
