@@ -4,7 +4,7 @@
 
 ![prelive](https://github.com/user-attachments/assets/bc9b5ee5-22c8-4137-93c1-f0d964b67c72)
 
-## Features
+## ✨ Features
 
 - Provides a file server with automatic reloading functionality, ensuring your changes are immediately reflected in the browser.
 - Implemented in Lua using `vim.uv`, eliminating the need for Node.js or other external tools.
@@ -14,11 +14,11 @@
 > [!IMPORTANT]
 > For security reasons, it is recommended to use this plugin only in a trusted environment.
 
-## Requirements
+## ⚡ Requirements
 
 - Neovim v0.10.1 or later
 
-## Installation
+## 📦 Installation
 
 Install the plugin using your favorite package manager:
 
@@ -45,7 +45,7 @@ Plug 'hat0uma/prelive.nvim'
 lua require('prelive').setup {}
 ```
 
-## Configuration
+## 🛠️ Configuration
 
 The `setup` function accepts a table with the following options:
 
@@ -122,7 +122,7 @@ require('prelive').setup {
 }
 ```
 
-## Usage
+## 🚀 Usage
 
 ### Commands
 
@@ -152,7 +152,7 @@ Serve a specific file and open it in the browser:
 :PreLiveGo ./folder file.html
 ```
 
-## Lua API
+### Lua API
 
 The following functions are available for use in Lua:
 
@@ -180,10 +180,6 @@ prelive.open_log()
 prelive.reload(dir)
 ```
 
-## License
-
-This plugin is licensed under the MIT License.
-
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request on GitHub.
