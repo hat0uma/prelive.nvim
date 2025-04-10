@@ -20,7 +20,7 @@ timezone.get = function()
   return timezone.cache
 end
 
-local MON = {
+local MON2NUM = {
   Jan = 1,
   Feb = 2,
   Mar = 3,
@@ -35,6 +35,31 @@ local MON = {
   Dec = 12,
 }
 
+local NUM2WDAY = {
+  [1] = "Sun",
+  [2] = "Mon",
+  [3] = "Tue",
+  [4] = "Wed",
+  [5] = "Thu",
+  [6] = "Fri",
+  [7] = "Sat",
+}
+
+local NUM2MON = {
+  [1] = "Jan",
+  [2] = "Feb",
+  [3] = "Mar",
+  [4] = "Apr",
+  [5] = "May",
+  [6] = "Jun",
+  [7] = "Jul",
+  [8] = "Aug",
+  [9] = "Sep",
+  [10] = "Oct",
+  [11] = "Nov",
+  [12] = "Dec",
+}
+
 --- Convert timestamp from RFC1123 date format
 ---@param date string
 ---@return integer
@@ -45,9 +70,8 @@ function M.from_rfc1123_GMT(date)
   -- Wed, 21 Oct 2015 07:28:00 GMT
   local pattern = "%a+, (%d+) (%a+) (%d+) (%d+):(%d+):(%d+) (%a+)"
   local day, month, year, hour, min, sec, tz = string.match(date, pattern)
-  assert(tz == "GMT")
-
-  month = MON[month]
+  assert(tz == "GMT", "Timezone must be GMT: " .. date)
+  month = MON2NUM[month]
   local dateparam = { day = day, month = month, year = year, hour = hour, min = min, sec = sec }
   return os.time(dateparam) + timezone.get()
 end
@@ -57,7 +81,24 @@ end
 ---@return string
 function M.to_rfc1123_GMT(timestamp)
   vim.validate({ timestamp = { timestamp, "number" } })
-  return os.date("!%a, %d %b %Y %H:%M:%S GMT", timestamp) ---@type string
+
+  ---@type osdate
+  local osdate = os.date("!*t", timestamp) ---@diagnostic disable-line: assign-type-mismatch
+  local weekday = NUM2WDAY[osdate.wday]
+  local month = NUM2MON[osdate.month]
+
+  -- for example:
+  -- Wed, 21 Oct 2015 07:28:00 GMT
+  return string.format(
+    "%s, %02d %s %04d %02d:%02d:%02d GMT",
+    weekday,
+    osdate.day,
+    month,
+    osdate.year,
+    osdate.hour,
+    osdate.min,
+    osdate.sec
+  )
 end
 
 return M
