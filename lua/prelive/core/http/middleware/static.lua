@@ -142,11 +142,9 @@ end
 ---@param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
 ---@return prelive.http.MiddlewareHandler
 return function(path, rootdir, prewrite)
-  vim.validate({
-    path = { path, "string" },
-    rootdir = { rootdir, { "string" } },
-    prewrite = { prewrite, { "function", true } },
-  })
+  vim.validate("path", path, "string", false)
+  vim.validate("rootdir", rootdir, "string", false)
+  vim.validate("prewrite", prewrite, "function", true, "prelive.http.middleware.static_prewrite")
 
   rootdir = vim.fs.normalize(rootdir)
   ---@async

@@ -23,11 +23,9 @@ end
 ---@param file? string The file to open. If nil, open the top page.
 ---@param go_opts? { watch: boolean }
 function M.go(dir, file, go_opts)
-  vim.validate({
-    dir = { dir, "string" },
-    file = { file, "string", true },
-    go_opts = { go_opts, "table", true },
-  })
+  vim.validate("dir", dir, "string", false)
+  vim.validate("file", file, "string", true)
+  vim.validate("go_opts", go_opts, "table", true, "{ watch: boolean }")
 
   local opts = config.get()
   go_opts = go_opts or { watch = true }
@@ -153,9 +151,9 @@ function M.select_close()
 end
 
 ---Stop serving the directory. if the directory is not specified, stop all.
----@param dir string | nil
+---@param dir? string
 function M.close(dir)
-  vim.validate({ dir = { dir, "string", true } })
+  vim.validate("dir", dir, "string", true)
   if not M._server then
     log.warn("The server is not running.")
     return

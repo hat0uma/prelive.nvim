@@ -11,10 +11,8 @@ local StreamReader = {}
 ---@param thread thread The coroutine to run the reader.
 ---@return prelive.StreamReader
 function StreamReader:new(stream, thread)
-  vim.validate({
-    stream = { stream, "userdata" },
-    thread = { thread, "thread" },
-  })
+  vim.validate("stream", stream, "userdata", false, "uv_stream_t")
+  vim.validate("thread", thread, "thread", false)
 
   local obj = {}
   obj._stream = stream

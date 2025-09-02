@@ -38,11 +38,9 @@ end
 ---@param status_code integer? The status code to write. If not provided, it will be 200 OK.
 ---@return string|nil err_msg Error message if any.
 function HTTPResponse:write(body, size, status_code)
-  vim.validate({
-    body = { body, "string" },
-    size = { size, "number", true },
-    status_code = { status_code, "number", true },
-  })
+  vim.validate("body", body, "string", false)
+  vim.validate("size", size, "number", true, "integer")
+  vim.validate("status_code", status_code, "number", true, "integer")
 
   local thread = coroutine.running()
   if not thread then
@@ -81,7 +79,7 @@ end
 ---@param status_code integer The status code to write.
 ---@return string|nil err_msg Error message if any.
 function HTTPResponse:write_header(status_code)
-  vim.validate({ status_code = { status_code, "number" } })
+  vim.validate("status_code", status_code, "number", false, "integer")
 
   local thread = coroutine.running()
   if not thread then

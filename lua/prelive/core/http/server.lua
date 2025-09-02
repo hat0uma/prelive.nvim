@@ -50,11 +50,9 @@ local HTTPServer = {}
 ---@param options prelive.Config.Http the options.
 ---@return prelive.http.Server
 function HTTPServer:new(addr, port, options)
-  vim.validate({
-    addr = { addr, "string" },
-    port = { port, "number" },
-    options = { options, "table" },
-  })
+  vim.validate("addr", addr, "string", false)
+  vim.validate("port", port, "number", false, "integer")
+  vim.validate("options", options, "table", false, "prelive.Config.Http")
 
   local obj = {}
   obj._addr = addr
@@ -269,11 +267,9 @@ end
 ---@param method string
 ---@param handler prelive.http.RequestHandler
 function HTTPServer:_add_route(path, method, handler)
-  vim.validate({
-    path = { path, path_validate() },
-    method = { method, "string" },
-    handler = { handler, "function" },
-  })
+  vim.validate("path", path, path_validate(), false)
+  vim.validate("method", method, "string", false)
+  vim.validate("handler", handler, "function", false, "prelive.http.RequestHandler")
 
   table.insert(self._routes, { pattern = path, method = method, handler = handler })
 end
@@ -312,11 +308,9 @@ end
 ---@param handler prelive.http.MiddlewareHandler the middleware handler.
 ---@param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
 function HTTPServer:use(path, handler, name)
-  vim.validate({
-    path = { path, path_validate() },
-    handler = { handler, "function" },
-    name = { name, "string", true },
-  })
+  vim.validate("path", path, path_validate(), false)
+  vim.validate("handler", handler, "function", false, "prelive.http.MiddlewareHandler")
+  vim.validate("name", name, "string", true)
   table.insert(self._middlewares, { name = name, pattern = path, handler = handler })
 end
 
