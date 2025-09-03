@@ -4,9 +4,9 @@ local status = require("prelive.core.http.status")
 
 --- Render directory listing.
 --- This will render a directory listing in HTML format.
----@param directory string The directory to render.
----@param path string The path to render.
----@return string body The rendered directory listing.
+--- @param directory string The directory to render.
+--- @param path string The path to render.
+--- @return string body The rendered directory listing.
 local function render_directory(directory, path)
   local body = {
     "<!DOCTYPE html>",
@@ -34,9 +34,9 @@ end
 --- @alias prelive.http.middleware.static_prewrite fun(res:prelive.http.Response,filename:string,body:string):string
 
 --- Check file is not modified
----@param req prelive.http.Request
----@param stat uv.fs_stat.result
----@return boolean
+--- @param req prelive.http.Request
+--- @param stat uv.fs_stat.result
+--- @return boolean
 local function is_file_not_modified(req, stat)
   local if_modified_since = req.headers:get("If-Modified-Since")
   if not if_modified_since then
@@ -47,13 +47,13 @@ local function is_file_not_modified(req, stat)
   return timestamp == stat.mtime.sec
 end
 
----@async
+--- @async
 ---Serve static files.
----@param path string The path prefix of static files.
----@param rootdir string The root directory of static files. It should be an absolute path.
----@param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
----@param req prelive.http.Request The request object.
----@param res prelive.http.Response The response object.
+--- @param path string The path prefix of static files.
+--- @param rootdir string The root directory of static files. It should be an absolute path.
+--- @param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
+--- @param req prelive.http.Request The request object.
+--- @param res prelive.http.Response The response object.
 local function serve_static(path, rootdir, prewrite, req, res)
   -- normalize requested path
   local requested_path = req.path:gsub("^" .. path, "/")
@@ -113,7 +113,7 @@ local function serve_static(path, rootdir, prewrite, req, res)
   vim.uv.fs_read(fd, stat.size, 0, function(err, data)
     coroutine.resume(thread, data, err)
   end)
-  local data = coroutine.yield() ---@type string?
+  local data = coroutine.yield() --- @type string?
 
   vim.uv.fs_close(fd)
   if type(data) ~= "string" then
@@ -137,10 +137,10 @@ local function serve_static(path, rootdir, prewrite, req, res)
 end
 
 --- A middleware that serves static files.
----@param path string The path prefix of static files.
----@param rootdir string The root directory of static files. It should be an absolute path.
----@param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
----@return prelive.http.MiddlewareHandler
+--- @param path string The path prefix of static files.
+--- @param rootdir string The root directory of static files. It should be an absolute path.
+--- @param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
+--- @return prelive.http.MiddlewareHandler
 return function(path, rootdir, prewrite)
   if vim.fn.has("nvim-0.11") then
     vim.validate("path", path, "string", false)
@@ -155,7 +155,7 @@ return function(path, rootdir, prewrite)
   end
 
   rootdir = vim.fs.normalize(rootdir)
-  ---@async
+  --- @async
   return function(req, res, donext)
     if req.method ~= "GET" then
       res.headers:set("Allow", "GET")

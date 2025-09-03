@@ -1,4 +1,4 @@
----@class prelive.WebBrowser
+--- @class prelive.WebBrowser
 local M = {}
 
 --- @type table<string, string[][]>
@@ -23,7 +23,7 @@ local browser_candidates = {
 }
 
 --- Get the system name.
----@return "windows" | "unix" | "mac" | "wsl" | nil
+--- @return "windows" | "unix" | "mac" | "wsl" | nil
 local function get_sysname()
   local uname = vim.uv.os_uname()
   if uname.sysname:find("Windows") then

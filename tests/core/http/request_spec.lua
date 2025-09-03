@@ -1,4 +1,4 @@
----@diagnostic disable: await-in-sync
+--- @diagnostic disable: await-in-sync
 local StreamReader = require("prelive.core.http.stream_reader")
 local request = require("prelive.core.http.request")
 local status = require("prelive.core.http.status")
@@ -7,7 +7,7 @@ local DEFAULT_HOST = "example.com"
 local CLIENT_IP = "1.1.1.1"
 
 describe("read_request_async", function()
-  local reader ---@type prelive.StreamReader
+  local reader --- @type prelive.StreamReader
   before_each(function()
     local thread = coroutine.running()
     local dummy = vim.uv.new_tcp()
@@ -18,8 +18,8 @@ describe("read_request_async", function()
     reader:close()
   end)
 
-  ---@param tbl string[]
-  ---@param newline? string
+  --- @param tbl string[]
+  --- @param newline? string
   local function define_request(tbl, newline)
     newline = newline or "\r\n"
     local msg = table.concat(tbl, newline) .. newline

@@ -1,4 +1,4 @@
----@diagnostic disable: await-in-sync
+--- @diagnostic disable: await-in-sync
 
 local HTTPResponse = require("prelive.core.http.response")
 local status = require("prelive.core.http.status")
@@ -19,7 +19,7 @@ local function create_dummy_socket()
 end
 
 describe("HTTPResponse", function()
-  local response ---@type prelive.http.Response
+  local response --- @type prelive.http.Response
   local dummy_socket
   before_each(function()
     dummy_socket = create_dummy_socket()

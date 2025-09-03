@@ -1,8 +1,8 @@
 local log = require("prelive.core.log")
 --- A middleware that logs the request and response to the console.
----@return prelive.http.MiddlewareHandler
+--- @return prelive.http.MiddlewareHandler
 return function()
-  ---@async
+  --- @async
   return function(req, res, donext)
     local request_time = vim.uv.now()
     donext(req, res)

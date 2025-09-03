@@ -1,8 +1,8 @@
 local M = {}
 
 --- decode url
----@param url string The url to decode.
----@return string decoded The decoded url.
+--- @param url string The url to decode.
+--- @return string decoded The decoded url.
 function M.decode(url)
   if vim.fn.has("nvim-0.11") then
     vim.validate("url", url, "string", false)
@@ -18,8 +18,8 @@ end
 --- parse url elements
 --- This will parse the url and return the base, fragment, and query elements.
 --- base: the base url without fragment and query. e.g. /path/to/file or http://example.com/path/to/file
----@param url string The url to parse.
----@return {base:string, fragment: string, query:string} elements The parsed elements.
+--- @param url string The url to parse.
+--- @return {base:string, fragment: string, query:string} elements The parsed elements.
 function M.parse(url)
   if vim.fn.has("nvim-0.11") then
     vim.validate("url", url, "string", false)

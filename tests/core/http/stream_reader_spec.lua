@@ -1,4 +1,4 @@
----@diagnostic disable: await-in-sync
+--- @diagnostic disable: await-in-sync
 local StreamReader = require("prelive.core.http.stream_reader")
 
 local HOST = "127.0.0.1"
@@ -13,7 +13,7 @@ local function find_free_port()
 end
 
 --- safe close libuv handles.
----@vararg uv_handle_t
+--- @vararg uv_handle_t
 local function safe_close(...)
   for _, handle in ipairs({ ... }) do
     if not handle:is_closing() then
@@ -23,8 +23,8 @@ local function safe_close(...)
 end
 
 --- Create a stream reader and return it.
----@param thread thread
----@return prelive.StreamReader reader, uv_tcp_t write_socket, uv_tcp_t server_socket
+--- @param thread thread
+--- @return prelive.StreamReader reader, uv_tcp_t write_socket, uv_tcp_t server_socket
 local function create_stream_reader(thread)
   local server_socket = vim.uv.new_tcp()
   local port = find_free_port()
@@ -45,13 +45,13 @@ local function create_stream_reader(thread)
     -- end
   end)
 
-  local reader = coroutine.yield() ---@type prelive.StreamReader
+  local reader = coroutine.yield() --- @type prelive.StreamReader
   return reader, write_socket, server_socket
 end
 
 --- Write messages step by step.
----@param write_socket uv_tcp_t
----@param messages string[]
+--- @param write_socket uv_tcp_t
+--- @param messages string[]
 local function write_message_step_by_step(write_socket, messages)
   local timer = vim.uv.new_timer()
   timer:start(10, 10, function()
@@ -66,16 +66,16 @@ local function write_message_step_by_step(write_socket, messages)
 end
 
 describe("StreamReader", function()
-  local write_socket ---@type uv_tcp_t
-  local server_socket ---@type uv_tcp_t
-  local reader ---@type prelive.StreamReader
+  local write_socket --- @type uv_tcp_t
+  local server_socket --- @type uv_tcp_t
+  local reader --- @type prelive.StreamReader
 
   local thread = coroutine.running()
   if not thread then
     error("not in coroutine")
   end
 
-  ---@async
+  --- @async
   before_each(function()
     reader, write_socket, server_socket = create_stream_reader(thread)
   end)

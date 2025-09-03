@@ -52,7 +52,7 @@ local PreLiveServer = {}
 function PreLiveServer:new(host, port, opts)
   self.__index = self
 
-  ---@type prelive.PreLiveServer
+  --- @type prelive.PreLiveServer
   local obj = setmetatable({}, self)
   obj._dirs = {}
   obj._next_id = 1
@@ -250,7 +250,7 @@ function PreLiveServer:_handle_update(req, res)
   end)
 
   --- Wait for resume and return status code.
-  local code = coroutine.yield() ---@type number
+  local code = coroutine.yield() --- @type number
   timer:close()
   --- @cast code integer
   res:write_header(code)
@@ -307,7 +307,7 @@ function PreLiveServer:_track_changes(dir, path, directory_id)
     [http.status.NOT_FOUND] = true,
     [http.status.NOT_MODIFIED] = true,
   }
-  ---@async
+  --- @async
   return function(req, res, donext)
     donext(req, res)
 

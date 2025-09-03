@@ -5,7 +5,7 @@ local timezone = {
 }
 
 --- Get timezone offset in seconds
----@return integer timezone offset in seconds
+--- @return integer timezone offset in seconds
 timezone.get = function()
   if timezone.cache then
     return timezone.cache
@@ -14,7 +14,7 @@ timezone.get = function()
   local localtime = os.time()
   local gmt_date = os.date("!*t", localtime)
 
-  ---@diagnostic disable-next-line: param-type-mismatch
+  --- @diagnostic disable-next-line: param-type-mismatch
   local gmtime = os.time(gmt_date)
   timezone.cache = os.difftime(localtime, gmtime)
   return timezone.cache
@@ -61,8 +61,8 @@ local NUM2MON = {
 }
 
 --- Convert timestamp from RFC1123 date format
----@param date string
----@return integer
+--- @param date string
+--- @return integer
 function M.from_rfc1123_GMT(date)
   if vim.fn.has("nvim-0.11") then
     vim.validate("date", date, "string", false)
@@ -81,8 +81,8 @@ function M.from_rfc1123_GMT(date)
 end
 
 --- Convert timestamp to RFC1123 date format(GMT)
----@param timestamp integer
----@return string
+--- @param timestamp integer
+--- @return string
 function M.to_rfc1123_GMT(timestamp)
   if vim.fn.has("nvim-0.11") then
     vim.validate("timestamp", timestamp, "number", false, "integer")
@@ -90,7 +90,7 @@ function M.to_rfc1123_GMT(timestamp)
     vim.validate({ timestamp = { timestamp, "number" } })
   end
 
-  ---@type osdate
+  --- @type osdate
   local osdate = os.date("!*t", timestamp)
   local weekday = NUM2WDAY[osdate.wday]
   local month = NUM2MON[osdate.month]

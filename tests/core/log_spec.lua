@@ -3,8 +3,8 @@ local log = require("prelive.core.log")
 local TEST_LOG_DIR = "./test_log"
 
 ---Read the contents of a file.
----@param fname string The file path.
----@return string contents
+--- @param fname string The file path.
+--- @return string contents
 local function read_test_file(fname)
   local fd = vim.uv.fs_open(vim.fs.joinpath(TEST_LOG_DIR, fname), "r", 438)
   if not fd then
@@ -18,7 +18,7 @@ local function read_test_file(fname)
 
   local data = vim.uv.fs_read(fd, stat.size, -1)
   vim.uv.fs_close(fd)
-  ---@diagnostic disable-next-line: return-type-mismatch
+  --- @diagnostic disable-next-line: return-type-mismatch
   return data or ""
 end
 

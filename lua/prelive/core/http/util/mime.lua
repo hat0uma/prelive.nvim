@@ -994,9 +994,9 @@ local MIME_EXT_MAPPINGS = {
 }
 
 --- Returns the MIME type for a given file extension.
----@param ext string The file extension.
----@param fallback string? The MIME type to return if the extension is not found.
----@return string mime The MIME type.
+--- @param ext string The file extension.
+--- @param fallback string? The MIME type to return if the extension is not found.
+--- @return string mime The MIME type.
 function M.from_extension(ext, fallback)
   if fallback == nil then
     fallback = "application/octet-stream"

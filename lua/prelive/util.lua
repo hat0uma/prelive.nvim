@@ -1,4 +1,4 @@
----@class prelive.Util
+--- @class prelive.Util
 local M = {}
 
 M._is_windows = vim.uv.os_uname().sysname:find("Windows") ~= nil

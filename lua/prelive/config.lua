@@ -2,9 +2,9 @@ local M = {}
 
 M.LOG_FILE_PATH = vim.fs.joinpath(vim.fn.stdpath("log"), "prelive.log")
 
----@class prelive.Config
+--- @class prelive.Config
 M.defaults = {
-  ---@class prelive.Config.Server
+  --- @class prelive.Config.Server
   server = {
     --- The host to bind the server to.
     --- It is strongly recommended not to expose it to the external network.
@@ -15,7 +15,7 @@ M.defaults = {
     port = 2255,
   },
 
-  ---@class prelive.Config.Http
+  --- @class prelive.Config.Http
   http = {
     --- Maximum number of pending connections.
     --- If the number of pending connections is greater than this value, the client will receive ECONNREFUSED.
@@ -60,7 +60,7 @@ M.defaults = {
     max_chunk_ext_size = 1024 * 1,
   },
 
-  ---@class prelive.Config.Log
+  --- @class prelive.Config.Log
   log = {
     --- The log levels to print. see `vim.log.levels`.
     print_level = vim.log.levels.WARN,
@@ -77,13 +77,13 @@ M.defaults = {
   },
 }
 
----@type prelive.Config
+--- @type prelive.Config
 local options
 
 --- Setup config.
----@param opts? prelive.Config
+--- @param opts? prelive.Config
 function M.setup(opts)
-  ---@type prelive.Config
+  --- @type prelive.Config
   options = vim.tbl_deep_extend("force", {}, M.defaults, opts or {})
 
   -- create a logger and set it as the default logger.
@@ -99,8 +99,8 @@ function M.setup(opts)
 end
 
 --- Get config
----@param opts? prelive.Config
----@return prelive.Config
+--- @param opts? prelive.Config
+--- @return prelive.Config
 function M.get(opts)
   if not options then
     M.setup()

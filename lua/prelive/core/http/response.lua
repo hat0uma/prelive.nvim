@@ -10,8 +10,8 @@ local status = require("prelive.core.http.status")
 local HTTPResponse = {}
 
 --- Create a new HTTPResponse object.
----@param connection uv.uv_tcp_t The connection object to write to.
----@return prelive.http.Response object The new http.Response object.
+--- @param connection uv.uv_tcp_t The connection object to write to.
+--- @return prelive.http.Response object The new http.Response object.
 function HTTPResponse:new(connection)
   local obj = {}
   obj._header_written = false
@@ -25,18 +25,18 @@ function HTTPResponse:new(connection)
 end
 
 --- Get status code.
----@return integer status The status code.
+--- @return integer status The status code.
 function HTTPResponse:get_status()
   return self._status
 end
 
----@async
+--- @async
 --- Write the response body to the connection.
 --- This function will write the response header if it is not written yet.
----@param body string The body to write.
----@param size integer? The size of the body. If not provided, it will be calculated from the body.
----@param status_code integer? The status code to write. If not provided, it will be 200 OK.
----@return string|nil err_msg Error message if any.
+--- @param body string The body to write.
+--- @param size integer? The size of the body. If not provided, it will be calculated from the body.
+--- @param status_code integer? The status code to write. If not provided, it will be 200 OK.
+--- @return string|nil err_msg Error message if any.
 function HTTPResponse:write(body, size, status_code)
   if vim.fn.has("nvim-0.11") then
     vim.validate("body", body, "string", false)
@@ -77,15 +77,15 @@ function HTTPResponse:write(body, size, status_code)
   return coroutine.yield() --- @type string|nil
 end
 
----@async
+--- @async
 --- Writes the response header to the connection explicitly.
 ---
 --- This function is automatically called internally by `write()`, so you don't normally need to call it directly.
 --- However, if you want to write only the header explicitly, you can call this function.
 --- This function does nothing if the header is already written.
 --- Currently, only HTTP/1.1 is supported.
----@param status_code integer The status code to write.
----@return string|nil err_msg Error message if any.
+--- @param status_code integer The status code to write.
+--- @return string|nil err_msg Error message if any.
 function HTTPResponse:write_header(status_code)
   if vim.fn.has("nvim-0.11") then
     vim.validate("status_code", status_code, "number", false, "integer")
@@ -133,14 +133,14 @@ function HTTPResponse:write_header(status_code)
 end
 
 --- Check if the header is written.
----@return boolean header_written True if the header is written.
+--- @return boolean header_written True if the header is written.
 function HTTPResponse:header_written()
   return self._header_written
 end
 
 --- Ensure the Content-Length header is set. If not set, it will be calculated from the body.
----@param body string The body to write.
----@param size integer? The size of the body. If not provided, it will be calculated from the body.
+--- @param body string The body to write.
+--- @param size integer? The size of the body. If not provided, it will be calculated from the body.
 function HTTPResponse:_ensure_content_length(body, size)
   -- if Content-Length or Transfer-Encoding is provided, do nothing.
   if self.headers:get("Content-Length") then
