@@ -325,9 +325,9 @@ end
 --- @param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
 function HTTPServer:use(path, handler, name)
   if vim.fn.has("nvim-0.11") then
-  vim.validate("path", path, path_validate(), false)
-  vim.validate("handler", handler, "function", false, "prelive.http.MiddlewareHandler")
-  vim.validate("name", name, "string", true)
+    vim.validate("path", path, path_validate(), false)
+    vim.validate("handler", handler, "function", false, "prelive.http.MiddlewareHandler")
+    vim.validate("name", name, "string", true)
   else
     vim.validate({
       path = { path, path_validate() },
