@@ -193,7 +193,7 @@ function M.close(dir)
 end
 
 function M.open_log()
-  vim.cmd("tabedit " .. config.LOG_FILE_PATH)
+  vim.cmd.tabedit(config.LOG_FILE_PATH)
 end
 
 --- Reload the page.
