@@ -30,3 +30,5 @@ end, {})
 vim.api.nvim_create_user_command("PreLiveLog", function()
   require("prelive").open_log()
 end, {})
+
+-- vim:ts=2:sts=2:sw=2:et:ai:si:sta:
