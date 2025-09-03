@@ -102,3 +102,5 @@ function M.to_rfc1123_GMT(timestamp)
 end
 
 return M
+
+-- vim:ts=2:sts=2:sw=2:et:ai:si:sta:

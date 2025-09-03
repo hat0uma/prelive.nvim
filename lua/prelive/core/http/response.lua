@@ -144,3 +144,5 @@ function HTTPResponse:_ensure_content_length(body, size)
 end
 
 return HTTPResponse
+
+-- vim:ts=2:sts=2:sw=2:et:ai:si:sta:

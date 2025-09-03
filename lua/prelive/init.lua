@@ -5,14 +5,15 @@ local mime = require("prelive.core.http.util.mime")
 local util = require("prelive.util")
 local webbrowser = require("prelive.core.webbrowser")
 
-local M = {
-  _server = nil,
-}
+---@class prelive
+---@field _server? prelive.PreLiveServer
+local M = {}
 
---- setup
+--- Setup `prelive`.
 ---@param opts? prelive.Config
 function M.setup(opts)
-  config.setup(opts)
+  vim.validate("opts", opts, "table", true, "prelive.Config")
+  config.setup(opts or {})
 end
 
 --- Start live.
@@ -208,3 +209,5 @@ function M.reload(dir)
 end
 
 return M
+
+-- vim:ts=2:sts=2:sw=2:et:ai:si:sta:

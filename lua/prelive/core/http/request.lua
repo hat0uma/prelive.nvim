@@ -393,3 +393,5 @@ return {
   read_request_async = read_request_async,
   HTTPRequest = HTTPRequest,
 }
+
+-- vim:ts=2:sts=2:sw=2:et:ai:si:sta:

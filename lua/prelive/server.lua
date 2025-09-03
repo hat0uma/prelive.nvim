@@ -30,49 +30,50 @@ local INJECT_JS_TEMPLATE = [[
 </script>
 ]]
 
----This class provides file-serving functionality with auto-reloading capabilities.
----It embeds JavaScript for auto-reloading in the HTML files served.
----Any file that has been accessed even once becomes a monitored target. When a monitored file is updated, the browser will prompt a reload.
----To manually notify the server of updates, use the `notify_update` method.
----@class prelive.PreLiveServer
----@field _instance prelive.http.Server | nil
----@field _dirs table<integer, { dir: string, update_detected: boolean, watcher?: prelive.Watcher }>
----@field _next_id integer
----@field _host string
----@field _port integer
----@field _cleanup_autocmd integer?
----@field _options prelive.Config.Http
+--- This class provides file-serving functionality with auto-reloading capabilities.
+--- It embeds JavaScript for auto-reloading in the HTML files served.
+--- Any file that has been accessed even once becomes a monitored target. When a monitored file is updated, the browser will prompt a reload.
+--- To manually notify the server of updates, use the `notify_update` method.
+--- @class prelive.PreLiveServer
+--- @field _instance prelive.http.Server | nil
+--- @field _dirs { dir: string, update_detected: boolean, watcher?: prelive.Watcher }[]
+--- @field _next_id integer
+--- @field _host string
+--- @field _port integer
+--- @field _cleanup_autocmd integer | nil
+--- @field _options prelive.Config.Http
 local PreLiveServer = {}
 
 --- Create a new prelive.PreLiveServer.
----@param host string The address to bind.
----@param port integer The port to serve.
----@param opts prelive.Config.Http
----@return prelive.PreLiveServer
+--- @param host string The address to bind.
+--- @param port integer The port to serve.
+--- @param opts prelive.Config.Http
+--- @return prelive.PreLiveServer obj
 function PreLiveServer:new(host, port, opts)
-  local obj = {}
+  self.__index = self
+
+  ---@type prelive.PreLiveServer
+  local obj = setmetatable({}, self)
   obj._dirs = {}
   obj._next_id = 1
-  obj._instance = nil ---@type prelive.http.Server | nil
+  obj._instance = nil
   obj._host = host
   obj._port = port
-  obj._cleanup_autocmd = nil ---@type integer | nil
+  obj._cleanup_autocmd = nil
   obj._options = opts
 
-  setmetatable(obj, self)
-  self.__index = self
   return obj
 end
 
 --- Serve the server.
----@return boolean success
+--- @return boolean success
 function PreLiveServer:start_serve()
   if self._instance then
     log.error("Server is already started.")
     return false
   end
 
-  -- Register an autocmd to close the server on VimLeavePre.
+  --- Register an autocmd to close the server on `VimLeavePre`.
   self._cleanup_autocmd = vim.api.nvim_create_autocmd("VimLeavePre", {
     desc = "Close the prelive server on VimLeavePre.",
     callback = function()
@@ -80,14 +81,14 @@ function PreLiveServer:start_serve()
     end,
   })
 
-  -- Create a new server instance. and serve the update endpoint.
+  --- Create a new server instance. and serve the update endpoint.
   self._instance = http.Server:new(self._host, self._port, self._options)
   self._instance:use_logger()
   self._instance:get("/update/", function(req, res) --- @async
     self:_handle_update(req, res)
   end)
 
-  -- Serve the directory.
+  --- Serve the directory.
   local success, err = self._instance:start_serve()
   if not success then
     log.error("Failed to start the server: %s", err)
@@ -97,29 +98,29 @@ end
 
 --- Add a directory to serve.
 --- This function can be called after `start_serve`.
----@param dir string The directory to serve.
----@param watch boolean Whether to watch changes in the directory. if false, you need to call `notify_update` manually.
----@return string? url The URL of the preview file or directory.
+--- @param dir string The directory to serve.
+--- @param watch boolean Whether to watch changes in the directory. if false, you need to call `notify_update` manually.
+--- @return string? url The URL of the preview file or directory.
 function PreLiveServer:add_directory(dir, watch)
   if not self._instance then
     log.error("Server is not started.")
     return nil
   end
 
-  -- Check if the directory is already being served.
+  --- Check if the directory is already being served.
   local directory_id = self:_get_directory_id(dir)
   if directory_id then
     log.info("Already serving %s", dir)
     return self:_get_url(directory_id)
   end
 
-  -- Assign an id to the directory.
+  --- Assign an id to the directory.
   directory_id = self._next_id
   self._next_id = self._next_id + 1
   self._dirs[directory_id] = { dir = dir, update_detected = false }
   local path = self:_get_serve_path(directory_id)
 
-  -- Watch changes in the directory.
+  --- Watch changes in the directory.
   if watch then
     self._instance:use(path, self:_track_changes(dir, path, directory_id))
     self._dirs[directory_id].watcher = Watcher:new()
@@ -128,13 +129,13 @@ function PreLiveServer:add_directory(dir, watch)
     end)
   end
 
-  -- Serve the directory.
+  --- Serve the directory.
   self._instance:use_static(path, dir, self:_create_prewrite_static(directory_id), path)
   return self:_get_url(directory_id)
 end
 
 --- Remove the directory from serving.
----@param dir string The directory to remove.
+--- @param dir string The directory to remove.
 function PreLiveServer:remove_directory(dir)
   local directory_id = self:_get_directory_id(dir)
   if not directory_id then
@@ -156,7 +157,7 @@ end
 
 --- Mark the directory as updated.
 --- This will trigger the auto-reload.
----@param dir string
+--- @param dir string
 function PreLiveServer:notify_update(dir)
   local directory_id = self:_get_directory_id(dir)
   if not directory_id then
@@ -166,8 +167,8 @@ function PreLiveServer:notify_update(dir)
   self._dirs[directory_id].update_detected = true
 end
 
----Get a list of directories being served.
----@return { dir: string, url: string }[]
+--- Get a list of directories being served.
+--- @return { dir: string, url: string }[]
 function PreLiveServer:get_served_directories()
   local result = {}
   for id, v in pairs(self._dirs) do
@@ -178,12 +179,12 @@ end
 
 --- Close the server.
 function PreLiveServer:close()
-  -- Remove all directories.
+  --- Remove all directories.
   for _, v in pairs(self._dirs) do
     self:remove_directory(v.dir)
   end
 
-  -- Close the server.
+  --- Close the server.
   self._dirs = {}
   self._next_id = 1
   if self._instance then
@@ -191,18 +192,18 @@ function PreLiveServer:close()
     self._instance = nil
   end
 
-  -- Remove the autocmd.
+  --- Remove the autocmd.
   if self._cleanup_autocmd then
     vim.api.nvim_del_autocmd(self._cleanup_autocmd)
     self._cleanup_autocmd = nil
   end
 end
 
----@async
+--- @async
 --- Handle `/update` endpoint.
---- this endpoint is long-polling.
----@param req prelive.http.Request
----@param res prelive.http.Response
+--- This endpoint is long-polling.
+--- @param req prelive.http.Request
+--- @param res prelive.http.Response
 function PreLiveServer:_handle_update(req, res)
   -- get the directory from the path
   local m = req.path:match("/update/(.+)")
@@ -212,7 +213,7 @@ function PreLiveServer:_handle_update(req, res)
     return
   end
 
-  -- get the directory id
+  --- Get the directory id.
   local id = tonumber(m)
   if not id or not self._dirs[id] then
     log.warn("Invalid id: %s", id)
@@ -220,10 +221,15 @@ function PreLiveServer:_handle_update(req, res)
     return
   end
 
-  -- Wait for update. If timeout, return 304.
+  --- Wait for update. If timeout, return 304.
   local elapsed = 0
   local thread = coroutine.running()
   local timer = vim.uv.new_timer()
+
+  if timer == nil then
+    return
+  end
+
   timer:start(CHECK_INTERVAL, CHECK_INTERVAL, function()
     elapsed = elapsed + CHECK_INTERVAL
 
@@ -243,9 +249,10 @@ function PreLiveServer:_handle_update(req, res)
     end
   end)
 
-  -- Wait for resume and return status code.
+  --- Wait for resume and return status code.
   local code = coroutine.yield() ---@type number
   timer:close()
+  --- @cast code integer
   res:write_header(code)
   if self._dirs[id] then
     self._dirs[id].update_detected = false
@@ -253,8 +260,8 @@ function PreLiveServer:_handle_update(req, res)
 end
 
 --- Get the directory id.
----@param dir string
----@return integer?
+--- @param dir string
+--- @return integer?
 function PreLiveServer:_get_directory_id(dir)
   for id, v in pairs(self._dirs) do
     if v.dir == dir then
@@ -265,13 +272,13 @@ function PreLiveServer:_get_directory_id(dir)
 end
 
 --- Create a prewrite hook function for static files.
----@param id integer The id of the directory.
----@return prelive.http.middleware.static_prewrite
+--- @param id integer The id of the directory.
+--- @return prelive.http.middleware.static_prewrite
 function PreLiveServer:_create_prewrite_static(id)
   local inject_js = INJECT_JS_TEMPLATE:gsub("{directory_id}", id)
 
   --- prewrite hook function for static files.
-  return function(res, filename, body)
+  return function(res, _, body)
     if res.headers:get("Content-Type") ~= "text/html" then
       return body
     end
@@ -290,10 +297,10 @@ function PreLiveServer:_create_prewrite_static(id)
 end
 
 --- Create a middleware to track changes in the directory.
----@param dir string The directory to watch.
----@param path string The path to serve.
----@param directory_id integer The id of the directory.
----@return prelive.http.MiddlewareHandler middleware
+--- @param dir string The directory to watch.
+--- @param path string The path to serve.
+--- @param directory_id integer The id of the directory.
+--- @return prelive.http.MiddlewareHandler middleware
 function PreLiveServer:_track_changes(dir, path, directory_id)
   local track_status = {
     [http.status.OK] = true,
@@ -317,17 +324,19 @@ function PreLiveServer:_track_changes(dir, path, directory_id)
 end
 
 --- Get the path to serve the directory.
----@param id integer The id of the directory.
----@return string path
+--- @param id integer The id of the directory.
+--- @return string path
 function PreLiveServer:_get_serve_path(id)
   return string.format("/static/%s/", id)
 end
 
 --- Get the URL of the directory.
----@param id integer The id of the directory.
----@return string url
+--- @param id integer The id of the directory.
+--- @return string url
 function PreLiveServer:_get_url(id)
   return string.format("http://%s:%d%s", self._host, self._instance:get_bound_port(), self:_get_serve_path(id))
 end
 
 return PreLiveServer
+
+-- vim:ts=2:sts=2:sw=2:et:ai:si:sta:
