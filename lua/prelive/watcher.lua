@@ -14,7 +14,11 @@ local Watcher = {}
 --- @param interval? integer The interval to poll for changes in milliseconds.
 --- @return prelive.Watcher
 function Watcher:new(interval)
-  vim.validate("interval", interval, "number", true, "integer")
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("interval", interval, "number", true, "integer")
+  else
+    vim.validate({ interval = { interval, { "number", "nil" } } })
+  end
 
   local obj = {}
   obj._interval = interval or DEFAULT_POLLING_INTERVAL
@@ -48,7 +52,11 @@ end
 --- Add a file to watch.
 --- @param file string The file to watch.
 function Watcher:add_watch_file(file)
-  vim.validate("file", file, "string", false)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("file", file, "string", false)
+  else
+    vim.validate({ file = { file, "string" } })
+  end
   file = vim.fs.normalize(file)
   if self._watch_files[file] then
     return

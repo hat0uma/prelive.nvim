@@ -18,7 +18,11 @@ local HTTPHeaders = {}
 ---@param headers table<string,string> The headers.
 ---@return prelive.http.Headers
 function HTTPHeaders:new(headers)
-  vim.validate("headers", headers, "table", false, "table<string,string>")
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("headers", headers, "table", false, "table<string,string>")
+  else
+    vim.validate({ headers = { headers, "table" } })
+  end
 
   local obj = {}
   obj._headers = {} --- @type table<string,string>
@@ -35,7 +39,11 @@ end
 ---@param key string The header key.
 ---@return string? value The header value.
 function HTTPHeaders:get(key)
-  vim.validate("key", key, "string", false)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("key", key, "string", false)
+  else
+    vim.validate({ key = { key, "string" } })
+  end
   return self._headers[convert_header_case(key)]
 end
 
@@ -43,8 +51,14 @@ end
 ---@param key string The header key.
 ---@param value string The header value.
 function HTTPHeaders:set(key, value)
-  vim.validate("key", key, "string", false)
-  vim.validate("value", value, "string", false)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("key", key, "string", false)
+  else
+    vim.validate({
+      key = { key, "string" },
+      value = { value, "string" },
+    })
+  end
   self._headers[convert_header_case(key)] = value
 end
 

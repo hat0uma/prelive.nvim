@@ -9,7 +9,7 @@ local status = require("prelive.core.http.status")
 --- @alias prelive.http.MiddlewareHandler async fun(req:prelive.http.Request,res:prelive.http.Response,donext:prelive.http.RequestHandler)
 
 --- safe close libuv handles.
----@vararg uv_handle_t
+---@vararg uv.uv_handle_t
 local function safe_close(...)
   for _, handle in ipairs({ ... }) do
     if not handle:is_closing() then
@@ -23,10 +23,10 @@ end
 ---@field _port integer
 ---@field _routes prelive.http.Server.Route[]
 ---@field _middlewares prelive.http.Server.Middleware[]
----@field _server uv_tcp_t
+---@field _server uv.uv_tcp_t
 ---@field _default_host string
 ---@field _options prelive.Config.Http
----@field _connections { socket: uv_tcp_t , reader: prelive.StreamReader }[]
+---@field _connections { socket: uv.uv_tcp_t , reader: prelive.StreamReader }[]
 local HTTPServer = {}
 
 ---@alias prelive.http.Server.Middleware { name?:string, pattern: string, method?: string, handler: prelive.http.MiddlewareHandler}
@@ -50,9 +50,17 @@ local HTTPServer = {}
 ---@param options prelive.Config.Http the options.
 ---@return prelive.http.Server
 function HTTPServer:new(addr, port, options)
-  vim.validate("addr", addr, "string", false)
-  vim.validate("port", port, "number", false, "integer")
-  vim.validate("options", options, "table", false, "prelive.Config.Http")
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("addr", addr, "string", false)
+    vim.validate("port", port, "number", false, "integer")
+    vim.validate("options", options, "table", false, "prelive.Config.Http")
+  else
+    vim.validate({
+      addr = { addr, "string" },
+      port = { port, "number" },
+      options = { options, "table" },
+    })
+  end
 
   local obj = {}
   obj._addr = addr
@@ -175,7 +183,7 @@ function HTTPServer:_handle_connection_async()
 end
 
 --- release connection
----@param conn uv_tcp_t
+---@param conn uv.uv_tcp_t
 function HTTPServer:_remove_connection_entry(conn)
   for i = 1, #self._connections do
     if self._connections[i].socket == conn then
@@ -267,9 +275,17 @@ end
 ---@param method string
 ---@param handler prelive.http.RequestHandler
 function HTTPServer:_add_route(path, method, handler)
-  vim.validate("path", path, path_validate(), false)
-  vim.validate("method", method, "string", false)
-  vim.validate("handler", handler, "function", false, "prelive.http.RequestHandler")
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("path", path, path_validate(), false)
+    vim.validate("method", method, "string", false)
+    vim.validate("handler", handler, "function", false, "prelive.http.RequestHandler")
+  else
+    vim.validate({
+      path = { path, path_validate() },
+      method = { method, "string" },
+      handler = { handler, "function" },
+    })
+  end
 
   table.insert(self._routes, { pattern = path, method = method, handler = handler })
 end
@@ -308,9 +324,17 @@ end
 ---@param handler prelive.http.MiddlewareHandler the middleware handler.
 ---@param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
 function HTTPServer:use(path, handler, name)
+  if vim.fn.has("nvim-0.11") then
   vim.validate("path", path, path_validate(), false)
   vim.validate("handler", handler, "function", false, "prelive.http.MiddlewareHandler")
   vim.validate("name", name, "string", true)
+  else
+    vim.validate({
+      path = { path, path_validate() },
+      handler = { handler, "function" },
+      name = { name, { "string", "nil" } },
+    })
+  end
   table.insert(self._middlewares, { name = name, pattern = path, handler = handler })
 end
 

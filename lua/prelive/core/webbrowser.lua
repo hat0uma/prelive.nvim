@@ -54,8 +54,15 @@ end
 --- @param url string
 --- @return string[]
 local function inject_url(cmd, url)
-  vim.validate("cmd", cmd, "table", false, "string[]")
-  vim.validate("url", url, "string", false)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("cmd", cmd, "table", false, "string[]")
+    vim.validate("url", url, "string", false)
+  else
+    vim.validate({
+      cmd = { cmd, "table" },
+      url = { url, "string" },
+    })
+  end
 
   return vim.tbl_map(function(arg)
     return arg:gsub("{url}", url)

@@ -5,12 +5,12 @@ local status = require("prelive.core.http.status")
 --- @class prelive.http.Response
 --- @field headers prelive.http.Headers
 --- @field _status integer
---- @field _connection uv_tcp_t
+--- @field _connection uv.uv_tcp_t
 --- @field _header_written boolean
 local HTTPResponse = {}
 
 --- Create a new HTTPResponse object.
----@param connection uv_tcp_t The connection object to write to.
+---@param connection uv.uv_tcp_t The connection object to write to.
 ---@return prelive.http.Response object The new http.Response object.
 function HTTPResponse:new(connection)
   local obj = {}
@@ -38,9 +38,17 @@ end
 ---@param status_code integer? The status code to write. If not provided, it will be 200 OK.
 ---@return string|nil err_msg Error message if any.
 function HTTPResponse:write(body, size, status_code)
-  vim.validate("body", body, "string", false)
-  vim.validate("size", size, "number", true, "integer")
-  vim.validate("status_code", status_code, "number", true, "integer")
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("body", body, "string", false)
+    vim.validate("size", size, "number", true, "integer")
+    vim.validate("status_code", status_code, "number", true, "integer")
+  else
+    vim.validate({
+      body = { body, "string" },
+      size = { size, { "number", "nil" } },
+      status_code = { status_code, { "number", "nil" } },
+    })
+  end
 
   local thread = coroutine.running()
   if not thread then
@@ -79,7 +87,11 @@ end
 ---@param status_code integer The status code to write.
 ---@return string|nil err_msg Error message if any.
 function HTTPResponse:write_header(status_code)
-  vim.validate("status_code", status_code, "number", false, "integer")
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("status_code", status_code, "number", false, "integer")
+  else
+    vim.validate({ status_code = { status_code, { "number", "nil" } } })
+  end
 
   local thread = coroutine.running()
   if not thread then

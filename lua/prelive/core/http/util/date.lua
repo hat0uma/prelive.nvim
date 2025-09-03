@@ -64,7 +64,11 @@ local NUM2MON = {
 ---@param date string
 ---@return integer
 function M.from_rfc1123_GMT(date)
-  vim.validate("date", date, "string", false)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("date", date, "string", false)
+  else
+    vim.validate({ date = { date, "string" } })
+  end
 
   -- for example:
   -- Wed, 21 Oct 2015 07:28:00 GMT
@@ -80,10 +84,14 @@ end
 ---@param timestamp integer
 ---@return string
 function M.to_rfc1123_GMT(timestamp)
-  vim.validate("timestamp", timestamp, "number", false, "integer")
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("timestamp", timestamp, "number", false, "integer")
+  else
+    vim.validate({ timestamp = { timestamp, "number" } })
+  end
 
   ---@type osdate
-  local osdate = os.date("!*t", timestamp) ---@diagnostic disable-line: assign-type-mismatch
+  local osdate = os.date("!*t", timestamp)
   local weekday = NUM2WDAY[osdate.wday]
   local month = NUM2MON[osdate.month]
 

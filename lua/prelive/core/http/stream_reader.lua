@@ -1,18 +1,25 @@
----@class prelive.StreamReader
----@field _stream uv_stream_t
----@field _buffer string
----@field _reading boolean
----@field _thread thread
----@field on_receive fun()?
+--- @class prelive.StreamReader
+--- @field _stream uv.uv_stream_t
+--- @field _buffer string
+--- @field _reading boolean
+--- @field _thread thread
+--- @field on_receive fun()?
 local StreamReader = {}
 
 --- Create a new StreamReader object.
----@param stream uv_stream_t The stream to read from.
----@param thread thread The coroutine to run the reader.
----@return prelive.StreamReader
+--- @param stream uv.uv_stream_t The stream to read from.
+--- @param thread thread The coroutine to run the reader.
+--- @return prelive.StreamReader
 function StreamReader:new(stream, thread)
-  vim.validate("stream", stream, "userdata", false, "uv_stream_t")
-  vim.validate("thread", thread, "thread", false)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("stream", stream, "userdata", false, "uv.uv_stream_t")
+    vim.validate("thread", thread, "thread", false)
+  else
+    vim.validate({
+      stream = { stream, "userdata" },
+      thread = { thread, "thread" },
+    })
+  end
 
   local obj = {}
   obj._stream = stream

@@ -4,7 +4,11 @@ local M = {}
 ---@param url string The url to decode.
 ---@return string decoded The decoded url.
 function M.decode(url)
-  vim.validate("url", url, "string", false)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("url", url, "string", false)
+  else
+    vim.validate({ url = { url, "string" } })
+  end
 
   -- replace + with %20(space) then decode
   url = url:gsub("%+", "%%20")
@@ -17,7 +21,11 @@ end
 ---@param url string The url to parse.
 ---@return {base:string, fragment: string, query:string} elements The parsed elements.
 function M.parse(url)
-  vim.validate("url", url, "string", false)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("url", url, "string", false)
+  else
+    vim.validate({ url = { url, "string" } })
+  end
 
   local rest = url
 

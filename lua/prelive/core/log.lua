@@ -285,8 +285,15 @@ function M.new_logger(handlers)
   --- @param handler prelive.log.Handler
   --- @param level integer Log level.
   function Logger.add_handler(handler, level)
-    vim.validate("level", level, "number", false, "integer")
-    vim.validate("handler", handler, "table", false, "prelive.log.Handler")
+    if vim.fn.has("nvim-0.11") then
+      vim.validate("level", level, "number", false, "integer")
+      vim.validate("handler", handler, "table", false, "prelive.log.Handler")
+    else
+      vim.validate({
+        level = { level, "number" },
+        handler = { handler, "table" },
+      })
+    end
 
     table.insert(Logger.handlers, { level = level, handler = handler })
   end

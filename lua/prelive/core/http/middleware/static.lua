@@ -35,7 +35,7 @@ end
 
 --- Check file is not modified
 ---@param req prelive.http.Request
----@param stat uv.aliases.fs_stat_table
+---@param stat uv.fs_stat.result
 ---@return boolean
 local function is_file_not_modified(req, stat)
   local if_modified_since = req.headers:get("If-Modified-Since")
@@ -72,7 +72,7 @@ local function serve_static(path, rootdir, prewrite, req, res)
     coroutine.resume(thread, stat, err)
   end)
 
-  local stat = coroutine.yield() --- @type uv.aliases.fs_stat_table|nil
+  local stat = coroutine.yield() --- @type uv.fs_stat.result|nil
   if not stat then
     res:write_header(status.NOT_FOUND)
     return
@@ -103,7 +103,7 @@ local function serve_static(path, rootdir, prewrite, req, res)
     coroutine.resume(thread, fd, err)
   end)
 
-  local fd = coroutine.yield() --- @integer?
+  local fd = coroutine.yield() --- @type integer?
   if type(fd) ~= "number" then
     res:write_header(status.INTERNAL_SERVER_ERROR)
     return
@@ -142,9 +142,17 @@ end
 ---@param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
 ---@return prelive.http.MiddlewareHandler
 return function(path, rootdir, prewrite)
-  vim.validate("path", path, "string", false)
-  vim.validate("rootdir", rootdir, "string", false)
-  vim.validate("prewrite", prewrite, "function", true, "prelive.http.middleware.static_prewrite")
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("path", path, "string", false)
+    vim.validate("rootdir", rootdir, "string", false)
+    vim.validate("prewrite", prewrite, "function", true, "prelive.http.middleware.static_prewrite")
+  else
+    vim.validate({
+      path = { path, "string" },
+      rootdir = { rootdir, "string" },
+      prewrite = { prewrite, { "function", "nil" } },
+    })
+  end
 
   rootdir = vim.fs.normalize(rootdir)
   ---@async

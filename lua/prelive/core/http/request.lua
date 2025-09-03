@@ -328,10 +328,19 @@ end
 ---@param default_host string?
 ---@return prelive.http.Request? request, integer? err_status, string? err_msg
 local function read_request_async(reader, client_ip, opts, default_host)
-  vim.validate("reader", reader, "table", false, "prelive.StreamReader")
-  vim.validate("client_ip", client_ip, "string", false)
-  vim.validate("opts", opts, "table", false, "prelive.Config.Http")
-  vim.validate("default_host", default_host, "string", true)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("reader", reader, "table", false, "prelive.StreamReader")
+    vim.validate("client_ip", client_ip, "string", false)
+    vim.validate("opts", opts, "table", false, "prelive.Config.Http")
+    vim.validate("default_host", default_host, "string", true)
+  else
+    vim.validate({
+      reader = { reader, "table" },
+      client_ip = { client_ip, "string" },
+      opts = { opts, "table" },
+      default_host = { default_host, { "string", "nil" } },
+    })
+  end
 
   -- check if the function is called within a coroutine
   local thread = coroutine.running()

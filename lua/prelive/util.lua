@@ -7,7 +7,12 @@ M._is_windows = vim.uv.os_uname().sysname:find("Windows") ~= nil
 --- @param path string
 --- @return boolean
 function M.is_absolute_path(path)
-  vim.validate("path", path, "string", false)
+  if vim.fn.has("nvim-0.11") then
+    vim.validate("path", path, "string", false)
+  else
+    vim.validate({ path = { path, "string" } })
+  end
+
   if M._is_windows then
     return path:match("^%a:[/\\]") ~= nil or path:match("^[/\\][/\\]") ~= nil
   else
