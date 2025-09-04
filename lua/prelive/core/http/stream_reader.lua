@@ -21,14 +21,14 @@ function StreamReader:new(stream, thread)
     })
   end
 
-  local obj = {}
+  self.__index = self
+  local obj = setmetatable({}, self)
+
   obj._stream = stream
   obj._thread = thread
   obj._reading = false
   obj._buffer = ""
-  obj.on_reveive = nil --- @type fun()?
-  setmetatable(obj, self)
-  self.__index = self
+  obj.on_receive = nil --- @type fun()?
   return obj
 end
 
@@ -38,11 +38,12 @@ local Bytes = {
 }
 
 --- @async
----Read a line from the stream asynchronously.
----`max_size` is exceeded, the line is returned as is.
----Reading is done in units of `vim.uv.recv_buffer_size()`, so note that the length of the returned string may be up to max_size + `vim.uv.recv_buffer_size()`.
+--- Read a line from the stream asynchronously.
+--- `max_size` is exceeded, the line is returned as is.
+--- Reading is done in units of `vim.uv.recv_buffer_size()`, so note that the length of the returned string may be up to max_size + `vim.uv.recv_buffer_size()`.
 --- @param max_size? integer The maximum size of the line to read.
---- @return string? line, string? err_msg
+--- @return string? line
+--- @return string? err_msg
 function StreamReader:readline_async(max_size)
   return self:_read_and_pop_async(function()
     return self:_pop_line_from_buffer(max_size)
@@ -50,10 +51,11 @@ function StreamReader:readline_async(max_size)
 end
 
 --- @async
----Read data asynchronously
----*This function must be called within a coroutine.*
+--- Read data asynchronously.
+--- *This function must be called within a coroutine.*
 --- @param size integer
---- @return string? line, string? err_msg
+--- @return string? line
+--- @return string? err_msg
 function StreamReader:read_async(size)
   return self:_read_and_pop_async(function()
     return self:_pop_data_from_buffer(size)
@@ -71,7 +73,7 @@ function StreamReader:_pop_line_from_buffer(max_size)
   local newline = self._buffer:find("\n")
   if not newline then
     -- If the buffer is larger than the maximum size, return the buffer.
-    if max_size and #self._buffer > max_size then
+    if max_size and self._buffer:len() > max_size then
       local data = self._buffer
       self._buffer = ""
       return data
@@ -93,9 +95,10 @@ function StreamReader:_pop_line_from_buffer(max_size)
 end
 
 --- @async
----Read a line, but skip empty line
+--- Read a line, but skip empty line.
 --- @param max_size? integer The maximum size of the line to read.
---- @return string? line ,string? err_msg
+--- @return string? line
+--- @return string? err_msg
 function StreamReader:readline_skip_empty_async(max_size)
   while true do
     local line, err_msg = self:readline_async(max_size)
@@ -108,11 +111,11 @@ function StreamReader:readline_skip_empty_async(max_size)
   end
 end
 
---- Pop specified size from the buffer
+--- Pop specified size from the buffer.
 --- @param size integer
 --- @return string? line
 function StreamReader:_pop_data_from_buffer(size)
-  if #self._buffer < size then
+  if self._buffer:len() < size then
     return nil
   end
 
@@ -123,9 +126,10 @@ function StreamReader:_pop_data_from_buffer(size)
 end
 
 --- @async
----Read data from the stream asynchronously.
+--- Read data from the stream asynchronously.
 --- @param read_fn fun():string?
---- @return string? line, string? err_msg
+--- @return string? line
+--- @return string? err_msg
 function StreamReader:_read_and_pop_async(read_fn)
   -- if there is expected data in the buffer, return the line
   local buffered_data = read_fn()

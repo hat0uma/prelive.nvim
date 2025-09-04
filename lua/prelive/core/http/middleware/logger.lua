@@ -3,6 +3,9 @@ local log = require("prelive.core.log")
 --- @return prelive.http.MiddlewareHandler
 return function()
   --- @async
+  --- @param req prelive.http.Request
+  --- @param res prelive.http.Response
+  --- @param donext fun(req: prelive.http.Request, res: prelive.http.Response)
   return function(req, res, donext)
     local request_time = vim.uv.now()
     donext(req, res)

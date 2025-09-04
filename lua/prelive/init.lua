@@ -44,8 +44,7 @@ function M.go(dir, file, go_opts)
   go_opts = go_opts or { watch = true }
 
   -- check directory exists.
-  local result, err
-  result, err = vim.uv.fs_realpath(vim.fs.normalize(dir)) -- normalize for expand ~
+  local result, err = vim.uv.fs_realpath(vim.fs.normalize(dir)) -- normalize for expand ~
   if not result then
     log.error(err or (dir .. " is not found."))
     return
@@ -70,7 +69,7 @@ function M.go(dir, file, go_opts)
     end
 
     -- check `file` is in the `dir`
-    if result:sub(1, #dir) == dir then
+    if result:sub(1, dir:len()) == dir then
       file = result:sub(#dir + 1)
     else
       log.warn("The file is not in the directory. Open the top page.")

@@ -33,7 +33,7 @@ end
 
 --- @alias prelive.http.middleware.static_prewrite fun(res:prelive.http.Response,filename:string,body:string):string
 
---- Check file is not modified
+--- Check whether file is not modified.
 --- @param req prelive.http.Request
 --- @param stat uv.fs_stat.result
 --- @return boolean
@@ -48,7 +48,7 @@ local function is_file_not_modified(req, stat)
 end
 
 --- @async
----Serve static files.
+--- Serve static files.
 --- @param path string The path prefix of static files.
 --- @param rootdir string The root directory of static files. It should be an absolute path.
 --- @param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.

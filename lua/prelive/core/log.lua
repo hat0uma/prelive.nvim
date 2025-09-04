@@ -117,8 +117,7 @@ function FileHandler:write(record)
   self:rotate()
 
   local log = self._formatter:format(record)
-  vim.uv.fs_write(self._fd, log)
-  vim.uv.fs_write(self._fd, "\n")
+  vim.uv.fs_write(self._fd, string.format("%s\n", log))
 end
 
 function FileHandler:close()
@@ -177,7 +176,7 @@ end
 --- @return string
 function FileHandler:_get_file_name(backup)
   local file_path = self._options.file_path
-  return backup == 0 and file_path or file_path .. "." .. backup
+  return backup == 0 and file_path or string.format("%s.%s", file_path, backup)
 end
 
 function FileHandler:_ensure_open()
@@ -222,12 +221,11 @@ local NotifyHandler = {}
 function NotifyHandler:new(options, formatter)
   options = vim.tbl_deep_extend("force", notify_handler_default_options, options)
 
-  local obj = {}
+  self.__index = self
+
+  local obj = setmetatable({}, self)
   obj._options = options
   obj._formatter = formatter or StringFormatter:new("{message}")
-
-  setmetatable(obj, self)
-  self.__index = self
   return obj
 end
 

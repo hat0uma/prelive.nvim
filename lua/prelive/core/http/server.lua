@@ -62,7 +62,9 @@ function HTTPServer:new(addr, port, options)
     })
   end
 
-  local obj = {}
+  self.__index = self
+
+  local obj = setmetatable({}, self)
   obj._addr = addr
   obj._port = port
   obj._routes = {}
@@ -71,8 +73,6 @@ function HTTPServer:new(addr, port, options)
   obj._default_host = ("%s:%s"):format(addr, port)
   obj._connections = {}
   obj._options = options
-  setmetatable(obj, self)
-  self.__index = self
   return obj
 end
 
@@ -122,12 +122,22 @@ end
 function HTTPServer:_handle_connection_async()
   -- create client connection
   local client = vim.uv.new_tcp()
+  if not client then
+    log.error("TCP client is nil")
+    return
+  end
+
   self._server:accept(client)
   local client_ip = client:getpeername().ip
 
   -- create connection timer and start it.
   -- close connection if no data is received within the timeout.
   local connection_timer = vim.uv.new_timer()
+  if not connection_timer then
+    log.error("Connection time is nil")
+    return
+  end
+
   local on_connection_timeout = function()
     log.trace("%p close connection with timeout", client)
     safe_close(client, connection_timer)
@@ -188,15 +198,16 @@ function HTTPServer:_remove_connection_entry(conn)
   for i = 1, #self._connections do
     if self._connections[i].socket == conn then
       self._connections[i].reader:close()
-      table.remove(self._connections, i)
+      self._connections[i] = nil
+      -- table.remove(self._connections, i)
       break
     end
   end
 end
 
---- match request with entry.
---- @param req prelive.http.Request the request.
---- @param entry prelive.http.Server.Middleware | prelive.http.Server.Route the entry.
+--- Match request with entry.
+--- @param req prelive.http.Request The request.
+--- @param entry prelive.http.Server.Middleware | prelive.http.Server.Route The entry.
 --- @return boolean
 function HTTPServer:_match(req, entry)
   -- check method
@@ -215,14 +226,14 @@ function HTTPServer:_match(req, entry)
 end
 
 --- @async
----Handle request.
---- @param req prelive.http.Request the request.
---- @param res prelive.http.Response the response.
+--- Handle request.
+--- @param req prelive.http.Request The request.
+--- @param res prelive.http.Response The response.
 function HTTPServer:_handle_request(req, res)
   local current = 1
 
   --- @async
-  ---Call next middleware or route handler.
+  --- Call next middleware or route handler.
   --- @param _req prelive.http.Request
   --- @param _res prelive.http.Response
   local function donext(_req, _res)
@@ -238,7 +249,8 @@ function HTTPServer:_handle_request(req, res)
           res:write_header(status.INTERNAL_SERVER_ERROR)
           return
         end
-        return
+        break
+        -- return
       end
     end
 
@@ -339,7 +351,7 @@ function HTTPServer:use(path, handler, name)
 end
 
 --- Remove a middleware.
---- @param name string the name of the middleware. use the name specified in `prelive.http.Server:use`.
+--- @param name string The name of the middleware. Use the name specified in `prelive.http.Server:use`.
 function HTTPServer:remove_middleware(name)
   for i = #self._middlewares, 1, -1 do
     if self._middlewares[i].name == name then
@@ -351,24 +363,20 @@ function HTTPServer:remove_middleware(name)
 end
 
 --- Add a static file middleware.
---- @param path string the path prefix of static files.
---- @param rootdir string the root directory of static files. it should be an absolute path.
---- @param prewrite? prelive.http.middleware.static_prewrite the prewrite hook function.
---- @param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
+--- @param path string The path prefix of static files.
+--- @param rootdir string The root directory of static files. it should be an absolute path.
+--- @param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
+--- @param name? string The name of the middleware. It is used for `prelive.http.Server:remove_middleware`.
 function HTTPServer:use_static(path, rootdir, prewrite, name)
-  if not vim.endswith(path, "/") then
-    path = path .. "/"
-  end
+  path = not vim.endswith(path, "/") and (path .. "/") or path
   self:use(path, middleware.static(path, rootdir, prewrite), name)
 end
 
 --- Add a logger middleware.
---- @param path? string if path is specified, only log the request and response for the path.
---- @param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
+--- @param path? string If path is specified, only log the request and response for the path.
+--- @param name? string The name of the middleware. It is used for `prelive.http.Server:remove_middleware`.
 function HTTPServer:use_logger(path, name)
-  if not path then
-    path = "/"
-  end
+  path = path or "/"
   self:use(path, middleware.logger(), name)
 end
 

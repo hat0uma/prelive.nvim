@@ -13,14 +13,14 @@ local HTTPResponse = {}
 --- @param connection uv.uv_tcp_t The connection object to write to.
 --- @return prelive.http.Response object The new http.Response object.
 function HTTPResponse:new(connection)
-  local obj = {}
+  self.__index = self
+
+  local obj = setmetatable({}, self)
   obj._header_written = false
   obj._status = -1
   obj._connection = connection
   obj.headers = HTTPHeaders:new({})
 
-  setmetatable(obj, self)
-  self.__index = self
   return obj
 end
 
@@ -59,10 +59,8 @@ function HTTPResponse:write(body, size, status_code)
   if not self._header_written then
     self:_ensure_content_length(body, size)
     self:write_header(status_code or status.OK)
-  else -- if header is already written, check status code
-    if status_code ~= nil then
-      log.warn("Status code is ignored because the header is already written")
-    end
+  elseif status_code ~= nil then -- if header is already written, check status code
+    log.warn("Status code is ignored because the header is already written")
   end
 
   -- write body

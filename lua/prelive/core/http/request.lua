@@ -8,6 +8,16 @@ local VALID_HTTP_METHODS = { "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS" }
 -- This is a limit on the length of the chunk size string, not the maximum size of the chunk data.
 local MAX_CHUNK_SIZE_HEXDIGIT = ("FFFFFFFF"):len() -- 32bit. see also `MAX_BODY_SIZE`
 
+--- @class prelive.http.Request.Param
+--- @field version string
+--- @field method string
+--- @field path string
+--- @field headers prelive.http.Headers
+--- @field body string
+--- @field fragment string
+--- @field client_ip string
+--- @field query string
+
 --- @class prelive.http.Request
 --- @field version string
 --- @field method string
@@ -21,10 +31,12 @@ local MAX_CHUNK_SIZE_HEXDIGIT = ("FFFFFFFF"):len() -- 32bit. see also `MAX_BODY_
 local HTTPRequest = {}
 
 --- Create a new HTTPRequest object.
---- @param param { version:string,method:string,path:string,headers:prelive.http.Headers,body:string,fragment:string,client_ip:string,query:string }
+--- @param param prelive.http.Request.Param
 --- @return prelive.http.Request
 function HTTPRequest:new(param)
-  local obj = {}
+  self.__index = self
+
+  local obj = setmetatable({}, self)
   obj.version = param.version
   obj.method = param.method
   obj.path = param.path
@@ -35,22 +47,22 @@ function HTTPRequest:new(param)
   obj.protocol = "http"
   obj.query = param.query
 
-  setmetatable(obj, self)
-  self.__index = self
   return obj
 end
 
---- Get request url
---- @return string url The request url.
+--- Get request URL.
+--- @return string url The request URL.
 function HTTPRequest:get_url()
   return ("%s://%s%s"):format(self.protocol, self.headers["Host"], self.path)
 end
 
 --- @async
----Parse HTTP request line.
+--- Parse HTTP request line.
 --- @param reader prelive.StreamReader
 --- @param opts prelive.Config.Http
---- @return {method:string,path:string,version:string, query:string, fragment:string }? request, integer? err_status, string? err_msg
+--- @return { method:string,path:string,version:string, query:string, fragment:string }? request
+--- @return integer? err_status
+--- @return string? err_msg
 local function read_request_line_async(reader, opts)
   local line, err_msg = reader:readline_skip_empty_async(opts.max_request_line_size)
   if not line then
@@ -58,7 +70,7 @@ local function read_request_line_async(reader, opts)
   end
 
   -- check request line length
-  if #line > opts.max_request_line_size then
+  if line:len() > opts.max_request_line_size then
     return nil, status.URI_TOO_LONG, "Request-URI Too Long."
   end
 
@@ -96,10 +108,12 @@ local function read_request_line_async(reader, opts)
 end
 
 --- @async
----Read headers asynchronously
+--- Read headers asynchronously.
 --- @param reader prelive.StreamReader
 --- @param opts prelive.Config.Http
---- @return prelive.http.Headers? headers, integer? err_status, string? err_msg
+--- @return prelive.http.Headers? headers
+--- @return integer? err_status
+--- @return string? err_msg
 local function read_headers_async(reader, opts)
   -- check if the function is called within a coroutine
   local thread = coroutine.running()
@@ -117,7 +131,7 @@ local function read_headers_async(reader, opts)
     end
 
     -- check header length
-    if #line > opts.max_header_field_size then
+    if line:len() > opts.max_header_field_size then
       return nil, status.REQUEST_HEADER_FIELDS_TOO_LARGE, "Request Header Fields Too Large."
     end
 
@@ -147,10 +161,12 @@ local function read_headers_async(reader, opts)
 end
 
 --- @async
----Read chunked body
+--- Read chunked body.
 --- @param reader prelive.StreamReader
 --- @param opts prelive.Config.Http
---- @return string? data ,integer? err_status, string? err_msg
+--- @return string? data
+--- @return integer? err_status
+--- @return string? err_msg
 local function read_chunked_body(reader, opts)
   -- RFC 9112 4.1. Chunked Transfer Coding
   -- chunked-body = *chunk
@@ -177,9 +193,10 @@ local function read_chunked_body(reader, opts)
   -- 0\r\n
   -- \r\n
 
-  -- read chunks
   local total_size = 0
   local body = {}
+
+  -- read chunks
   while true do
     local max = opts.max_chunk_ext_size + MAX_CHUNK_SIZE_HEXDIGIT + 2
     local line, err_msg = reader:readline_async(max)
@@ -188,7 +205,7 @@ local function read_chunked_body(reader, opts)
     end
 
     -- check max line length
-    if #line > max then
+    if line:len() > max then
       return nil, status.BAD_REQUEST, "Chunk size or chunk-ext is too long."
     end
 
@@ -241,11 +258,13 @@ local function read_chunked_body(reader, opts)
 end
 
 --- @async
----Read body with specified size
+--- Read body with specified size.
 --- @param reader prelive.StreamReader
 --- @param content_length string
 --- @param opts prelive.Config.Http
---- @return string? data ,integer? err_status, string? err_msg
+--- @return string? data
+--- @return integer? err_status
+--- @return string? err_msg
 local function read_sized_body(reader, content_length, opts)
   -- check content-length
   if content_length:match("^%d+$") == nil then
@@ -273,12 +292,14 @@ local function read_sized_body(reader, content_length, opts)
 end
 
 --- @async
----Read request body
+--- Read request body.
 --- @param reader prelive.StreamReader
 --- @param headers prelive.http.Headers
 --- @param method string
 --- @param opts prelive.Config.Http
---- @return string? data ,integer? err_status, string? err_msg
+--- @return string? data
+--- @return integer? err_status
+--- @return string? err_msg
 local function read_body(reader, headers, method, opts)
   local content_length = headers:get("Content-Length")
   local transfer_encoding = headers:get("Transfer-Encoding")
@@ -321,12 +342,14 @@ local function read_body(reader, headers, method, opts)
 end
 
 --- @async
----Read request asynchronously
+--- Read request asynchronously.
 --- @param reader prelive.StreamReader
 --- @param client_ip string
 --- @param opts prelive.Config.Http
 --- @param default_host string?
---- @return prelive.http.Request? request, integer? err_status, string? err_msg
+--- @return prelive.http.Request? request
+--- @return integer? err_status
+--- @return string? err_msg
 local function read_request_async(reader, client_ip, opts, default_host)
   if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("reader", reader, "table", false, "prelive.StreamReader")
@@ -398,9 +421,11 @@ local function read_request_async(reader, client_ip, opts, default_host)
   })
 end
 
-return {
-  read_request_async = read_request_async,
-  HTTPRequest = HTTPRequest,
-}
+---@class prelive.http.RequestMod
+local M = {}
+M.read_request_async = read_request_async
+M.HTTPRequest = HTTPRequest
+
+return M
 
 -- vim:ts=2:sts=2:sw=2:et:ai:si:sta:

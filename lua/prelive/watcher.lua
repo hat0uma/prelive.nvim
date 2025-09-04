@@ -8,6 +8,7 @@ local DEFAULT_POLLING_INTERVAL = 100
 --- @class prelive.Watcher
 --- @field _timer uv.uv_timer_t
 --- @field _watch_files table<string, { stat?: uv.fs_stat.result }>
+--- @field _interval integer
 local Watcher = {}
 
 --- Create a new prelive.Watcher.
@@ -20,13 +21,13 @@ function Watcher:new(interval)
     vim.validate({ interval = { interval, { "number", "nil" } } })
   end
 
-  local obj = {}
+  self.__index = self
+
+  local obj = setmetatable({}, self)
   obj._interval = interval or DEFAULT_POLLING_INTERVAL
   obj._timer = vim.uv.new_timer()
   obj._watch_files = {}
 
-  setmetatable(obj, self)
-  self.__index = self
   return obj
 end
 
