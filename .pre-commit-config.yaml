@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+
+  - repo: local
+    hooks:
+      - id: stylua
+        name: StyLua
+        language: system
+        entry: stylua
+        types: [lua]
+        verbose: true
+
+      - id: selene
+        name: Run selene linter
+        language: system
+        entry: selene
+        types: [lua]
+        verbose: true
