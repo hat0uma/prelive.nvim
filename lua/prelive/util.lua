@@ -15,9 +15,9 @@ function M.is_absolute_path(path)
 
   if M._is_windows then
     return path:match("^%a:[/\\]") ~= nil or path:match("^[/\\][/\\]") ~= nil
-  else
-    return path:match("^/") ~= nil
   end
+
+  return path:match("^/") ~= nil
 end
 
 return M
