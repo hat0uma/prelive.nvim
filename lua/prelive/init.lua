@@ -12,7 +12,7 @@ local M = {}
 --- Setup `prelive`.
 --- @param opts? prelive.Config
 function M.setup(opts)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("opts", opts, "table", true, "prelive.Config")
   else
     vim.validate({ opts = { opts, { "table", "nil" } } })
@@ -28,7 +28,7 @@ end
 --- @param file? string The file to open. If nil, open the top page.
 --- @param go_opts? { watch: boolean }
 function M.go(dir, file, go_opts)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("dir", dir, "string", false)
     vim.validate("file", file, "string", true)
     vim.validate("go_opts", go_opts, "table", true, "{ watch: boolean }")
@@ -166,7 +166,7 @@ end
 ---Stop serving the directory. if the directory is not specified, stop all.
 --- @param dir? string
 function M.close(dir)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("dir", dir, "string", true)
   else
     vim.validate({ dir = { dir, { "string", "nil" } } })

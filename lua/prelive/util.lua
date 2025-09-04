@@ -7,7 +7,7 @@ M._is_windows = vim.uv.os_uname().sysname:find("Windows") ~= nil
 --- @param path string
 --- @return boolean
 function M.is_absolute_path(path)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("path", path, "string", false)
   else
     vim.validate({ path = { path, "string" } })

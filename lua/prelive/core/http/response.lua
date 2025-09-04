@@ -38,7 +38,7 @@ end
 --- @param status_code integer? The status code to write. If not provided, it will be 200 OK.
 --- @return string|nil err_msg Error message if any.
 function HTTPResponse:write(body, size, status_code)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("body", body, "string", false)
     vim.validate("size", size, "number", true, "integer")
     vim.validate("status_code", status_code, "number", true, "integer")
@@ -87,7 +87,7 @@ end
 --- @param status_code integer The status code to write.
 --- @return string|nil err_msg Error message if any.
 function HTTPResponse:write_header(status_code)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("status_code", status_code, "number", false, "integer")
   else
     vim.validate({ status_code = { status_code, { "number", "nil" } } })

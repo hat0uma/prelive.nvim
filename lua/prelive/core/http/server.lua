@@ -50,7 +50,7 @@ local HTTPServer = {}
 --- @param options prelive.Config.Http the options.
 --- @return prelive.http.Server
 function HTTPServer:new(addr, port, options)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("addr", addr, "string", false)
     vim.validate("port", port, "number", false, "integer")
     vim.validate("options", options, "table", false, "prelive.Config.Http")
@@ -275,7 +275,7 @@ end
 --- @param method string
 --- @param handler prelive.http.RequestHandler
 function HTTPServer:_add_route(path, method, handler)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("path", path, path_validate(), false)
     vim.validate("method", method, "string", false)
     vim.validate("handler", handler, "function", false, "prelive.http.RequestHandler")
@@ -324,7 +324,7 @@ end
 --- @param handler prelive.http.MiddlewareHandler the middleware handler.
 --- @param name? string the name of the middleware. it is used for `prelive.http.Server:remove_middleware`.
 function HTTPServer:use(path, handler, name)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("path", path, path_validate(), false)
     vim.validate("handler", handler, "function", false, "prelive.http.MiddlewareHandler")
     vim.validate("name", name, "string", true)

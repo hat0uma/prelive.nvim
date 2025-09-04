@@ -18,7 +18,7 @@ local HTTPHeaders = {}
 --- @param headers table<string,string> The headers.
 --- @return prelive.http.Headers
 function HTTPHeaders:new(headers)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("headers", headers, "table", false, "table<string,string>")
   else
     vim.validate({ headers = { headers, "table" } })
@@ -39,7 +39,7 @@ end
 --- @param key string The header key.
 --- @return string? value The header value.
 function HTTPHeaders:get(key)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("key", key, "string", false)
   else
     vim.validate({ key = { key, "string" } })
@@ -51,7 +51,7 @@ end
 --- @param key string The header key.
 --- @param value string The header value.
 function HTTPHeaders:set(key, value)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("key", key, "string", false)
   else
     vim.validate({

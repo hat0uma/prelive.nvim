@@ -11,7 +11,7 @@ local StreamReader = {}
 --- @param thread thread The coroutine to run the reader.
 --- @return prelive.StreamReader
 function StreamReader:new(stream, thread)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("stream", stream, "userdata", false, "uv.uv_stream_t")
     vim.validate("thread", thread, "thread", false)
   else

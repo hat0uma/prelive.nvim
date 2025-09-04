@@ -142,7 +142,7 @@ end
 --- @param prewrite? prelive.http.middleware.static_prewrite The prewrite hook function.
 --- @return prelive.http.MiddlewareHandler
 return function(path, rootdir, prewrite)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("path", path, "string", false)
     vim.validate("rootdir", rootdir, "string", false)
     vim.validate("prewrite", prewrite, "function", true, "prelive.http.middleware.static_prewrite")

@@ -54,7 +54,7 @@ end
 --- @param url string
 --- @return string[]
 local function inject_url(cmd, url)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("cmd", cmd, "table", false, "string[]")
     vim.validate("url", url, "string", false)
   else

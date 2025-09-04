@@ -64,7 +64,7 @@ local NUM2MON = {
 --- @param date string
 --- @return integer
 function M.from_rfc1123_GMT(date)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("date", date, "string", false)
   else
     vim.validate({ date = { date, "string" } })
@@ -84,7 +84,7 @@ end
 --- @param timestamp integer
 --- @return string
 function M.to_rfc1123_GMT(timestamp)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("timestamp", timestamp, "number", false, "integer")
   else
     vim.validate({ timestamp = { timestamp, "number" } })

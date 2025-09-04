@@ -4,7 +4,7 @@ local M = {}
 --- @param url string The url to decode.
 --- @return string decoded The decoded url.
 function M.decode(url)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("url", url, "string", false)
   else
     vim.validate({ url = { url, "string" } })
@@ -21,7 +21,7 @@ end
 --- @param url string The url to parse.
 --- @return {base:string, fragment: string, query:string} elements The parsed elements.
 function M.parse(url)
-  if vim.fn.has("nvim-0.11") then
+  if vim.fn.has("nvim-0.11") == 1 then
     vim.validate("url", url, "string", false)
   else
     vim.validate({ url = { url, "string" } })
