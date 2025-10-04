@@ -198,8 +198,7 @@ function HTTPServer:_remove_connection_entry(conn)
   for i = 1, #self._connections do
     if self._connections[i].socket == conn then
       self._connections[i].reader:close()
-      self._connections[i] = nil
-      -- table.remove(self._connections, i)
+      table.remove(self._connections, i)
       break
     end
   end
